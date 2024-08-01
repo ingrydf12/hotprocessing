@@ -24,7 +24,7 @@ function love.load()
     player.hand2 = {x = 30, y = -10, w = 10, h = 10}
     player.shirt = {x = -40, y = -5, w = 80, h = 15}
 
-    enemy = love.graphics.newImage("assets/enemy.png")
+    enemy = love.graphics.newImage("assets/sprites/enemy.png")
     
     -- Inicializa o array de tiros
     tiros = {}
