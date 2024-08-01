@@ -1,3 +1,4 @@
+-- MARK: Demark variables
 local posx, posy = 200, 200
 local spd = 5
 local orange = {1,0.5,0}
@@ -8,6 +9,7 @@ local pele = {1, 0.8, 0.6}
 local player = {}
 local tiros = {}
 
+-- Inimigo variáveis
 local enemy = {}
 local inimigo = {x = 400, y = 400, spd = 2, vida = 2, morto = false, flashTime = 0}
 
@@ -109,6 +111,9 @@ function love.draw()
     -- MARK: Sprite enemy load
     if enemy then
         -- Desenha o sprite do inimigo
+        love.graphics.push()
+        love.translate(inimigo.x, inimigo.y)
+        love.graphics.rotate(inimigo.angle + math.pi /2)
         love.graphics.draw(enemy, inimigo.x, inimigo.y, 0, 1, 1, enemy:getWidth() / 2, enemy:getHeight() / 2)
     else
         -- Exibe uma mensagem de erro se o sprite não for carregado corretamente
@@ -151,14 +156,15 @@ function resetTiro(tiro)
     tiro.vely = 0
 end
 
--- MARK: - IA Inimigo
+-- MARK: - IA Enemy
 function moverInimigo(dt)
     local angle = math.atan2(posy - inimigo.y, posx - inimigo.x)
     inimigo.x = inimigo.x + math.cos(angle) * inimigo.spd
     inimigo.y = inimigo.y + math.sin(angle) * inimigo.spd
+    inimigo.angle = angle
 end
 
--- MARK: Check
+-- MARK: Check hit on Enemy
 function verificarAcerto(tiro)
     if tiro then
         local distancia = math.sqrt((tiro.x - inimigo.x)^2 + (tiro.y - inimigo.y)^2)
@@ -172,3 +178,4 @@ function verificarAcerto(tiro)
         end
     end
 end
+
