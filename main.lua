@@ -9,11 +9,13 @@ local pele = {1, 0.8, 0.6}
 local player = {frame = 1, sprites = {}}
 local tiros = {}
 local walls = {}
+
 -- Inimigo variáveis
-local inimigo = {x = 400, y = 400, spd = 2, vida = 2, morto = false, flashTime = 0, frame = 1}
+local inimigo = {x = 400, y = 400, spd = 2, vida = 2, morto = false, cego = false, flashTime = 0, frame = 1}
+local quantidade_de_inimigos = 1 --ignorar pq eh so um teste
 
 local tiro_atual = 1
-LIMITE = 5
+LIMITE = 10
 
 -- MARK: Function Load LOVE
 function love.load()
@@ -35,6 +37,9 @@ function love.load()
     for i = 1, LIMITE do
         tiros[i] = {x = -20, y = -20, velx = 0, vely = 0}
     end
+
+    -- Cria uma parede
+    walls[1] = createLine(500,0,500,800)
 end
 
 -- MARK: Movimentação
@@ -63,7 +68,7 @@ function love.update(dt)
         end
     end
     
-    if not inimigo.morto then
+    if not inimigo.morto and not inimigo.cego then
         moverInimigo(dt)
     end
 
@@ -85,6 +90,25 @@ function love.draw()
     love.graphics.line(mouseX - 20, mouseY, mouseX + 20, mouseY)
     love.graphics.line(mouseX, mouseY - 18, mouseX, mouseY + 18)
     
+    -- Paredes (só pra saber onde estão enquanto não tem sprite)
+    for i = 1, #walls do
+        love.graphics.line(walls[i])
+    end
+
+    -- MARK: Visão do inimigo
+    for i = 1, quantidade_de_inimigos do
+        local ponto = collisionPoint({inimigo.x, inimigo.y, posx, posy}, walls[1])
+        -- se existir um ponto de interseção E o ponto estiver mais próximo doq o player E eles estiverem na mesma direção
+        if ponto ~= 0 and Dist(inimigo.x, inimigo.y, ponto[1], ponto[2]) < Dist(inimigo.x, inimigo.y, posx, posy) and math.abs(angleToPoint(inimigo.x, inimigo.y, ponto[1], ponto[2]) - angleToPoint(inimigo.x, inimigo.y, posx, posy)) < 0.1 then
+            love.graphics.setColor(red)
+            inimigo.cego = true
+        else
+            inimigo.cego = false
+        end
+        love.graphics.line(inimigo.x, inimigo.y, posx, posy)
+    end
+    love.graphics.setColor(white)
+
     -- Draw player
     love.graphics.draw(player.sprites[1][player.frame], posx, posy, angleToPoint(posx, posy, mouseX, mouseY)+math.pi/2, 1, 1, player.sprites[1][player.frame]:getWidth()/2, player.sprites[1][player.frame]:getHeight()/2)
     
@@ -184,6 +208,7 @@ function loadSprites(directory)
     end
     return sprites
 end
+
 -- MARK: Player update
 function PlayerUpdate(direction, dt)
     -- Atualiza posição
@@ -198,4 +223,8 @@ function PlayerUpdate(direction, dt)
     if player.frame > #player.sprites[1] then
         player.frame = 1
     end
+end
+
+function Dist(x1, y1, x2, y2)
+    return math.sqrt((x1-x2)^2 + (y1-y2)^2)
 end

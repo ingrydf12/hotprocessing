@@ -1,4 +1,4 @@
-function CollisionPoint(line1, line2)
+function collisionPoint(line1, line2)
     local x, y
     denominator = (line1[1]-line1[3])*(line2[2]-line2[4]) - (line1[2]-line1[4])*(line2[1]-line2[3])
     
@@ -11,6 +11,6 @@ function CollisionPoint(line1, line2)
     end
 end
 
-function CreateLine(x1,y1,x2,y2)
+function createLine(x1,y1,x2,y2)
     return {x1,y1,x2,y2}
 end
