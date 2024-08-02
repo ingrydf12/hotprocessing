@@ -6,12 +6,11 @@ local red = {0.7, 0, 0} -- Tiro
 local white = {1,1,1}
 local pele = {1, 0.8, 0.6}
 
-local player = {}
+local player = {frame = 1, sprites = {}}
 local tiros = {}
-
+local walls = {}
 -- Inimigo variáveis
-local enemy = {}
-local inimigo = {x = 400, y = 400, spd = 2, vida = 2, morto = false, flashTime = 0}
+local inimigo = {x = 400, y = 400, spd = 2, vida = 2, morto = false, flashTime = 0, frame = 1}
 
 local tiro_atual = 1
 LIMITE = 5
@@ -20,13 +19,16 @@ LIMITE = 5
 function love.load()
     love.window.setMode(800, 800)
     love.graphics.setLineWidth(4)
-    
-    player.head = {x = -10, y = -20, w = 20, h = 20}
-    player.hand1 = {x = -40, y = -10, w = 10, h = 10}
-    player.hand2 = {x = 30, y = -10, w = 10, h = 10}
-    player.shirt = {x = -40, y = -5, w = 80, h = 15}
 
-    enemy = love.graphics.newImage("assets/sprites/enemy.png")
+    require "raycast"
+
+    -- Carrega animação teste do player
+    player.sprites[1] = loadSprites("assets/sprites/player")
+    player.sprites[1].fps = 2
+    player.sprites[1].time = 0
+
+    --Carrega sprite do inimigo (tá estruturado diferente do player pq eu tava com preguiça pra atualizar o codigo no love.draw)
+    inimigo.sprites = loadSprites("assets/sprites/enemy")
     
     -- Inicializa o array de tiros
     tiros = {}
@@ -51,7 +53,7 @@ function love.update(dt)
         dir[2] = dir[2] + 1
     end
 
-    posx, posy = posx + dir[1] * spd, posy + dir[2] * spd
+    PlayerUpdate(dir, dt)
 
     -- Atualiza tiros e verifica o estado do inimigo
     for i = 1, LIMITE do
@@ -78,23 +80,15 @@ function love.draw()
     local mouseY = love.mouse.getY()
 
     love.graphics.setColor(white)
+
+    -- Crosshair
     love.graphics.line(mouseX - 20, mouseY, mouseX + 20, mouseY)
     love.graphics.line(mouseX, mouseY - 18, mouseX, mouseY + 18)
     
-    love.graphics.push()
-    love.graphics.translate(posx, posy)
-    love.graphics.rotate(math.atan2(mouseY - posy, mouseX - posx) + math.pi / 2)
+    -- Draw player
+    love.graphics.draw(player.sprites[1][player.frame], posx, posy, angleToPoint(posx, posy, mouseX, mouseY)+math.pi/2, 1, 1, player.sprites[1][player.frame]:getWidth()/2, player.sprites[1][player.frame]:getHeight()/2)
     
-    love.graphics.setColor(pele)
-    love.graphics.rectangle("fill", player.head.x, player.head.y, player.head.w, player.head.h)
-    love.graphics.rectangle("fill", player.hand1.x, player.hand1.y, player.hand1.w, player.hand1.h)
-    love.graphics.rectangle("fill", player.hand2.x, player.hand2.y, player.hand2.h, player.hand2.h)
-    
-    love.graphics.setColor(orange)
-    love.graphics.rectangle("fill", player.shirt.x, player.shirt.y, player.shirt.w, player.shirt.h)
-    
-    love.graphics.pop()
-    
+    -- Draw tiros
     for i = 1, LIMITE do
         local tiro = tiros[i]
         love.graphics.setColor(red)
@@ -109,12 +103,9 @@ function love.draw()
     end
     
     -- MARK: Sprite enemy load
-    if enemy then
+    if inimigo.sprites then
         -- Desenha o sprite do inimigo
-        love.graphics.push()
-        love.translate(inimigo.x, inimigo.y)
-        love.graphics.rotate(inimigo.angle + math.pi /2)
-        love.graphics.draw(enemy, inimigo.x, inimigo.y, 0, 1, 1, enemy:getWidth() / 2, enemy:getHeight() / 2)
+        love.graphics.draw(inimigo.sprites[inimigo.frame], inimigo.x, inimigo.y, inimigo.angle+math.pi/2, 1, 1, inimigo.sprites[inimigo.frame]:getWidth() / 2, inimigo.sprites[inimigo.frame]:getHeight() / 2)
     else
         -- Exibe uma mensagem de erro se o sprite não for carregado corretamente
         love.graphics.print("Erro ao carregar sprite do inimigo", 10, 10)
@@ -128,7 +119,7 @@ function love.mousepressed(x, y, button, istouch, presses)
             tiro_atual = 1
         end
 
-        local angle = math.atan2(y - posy, x - posx)
+        local angle = angleToPoint(posx, posy, x, y)
         tiros[tiro_atual].x = posx
         tiros[tiro_atual].y = posy
         tiros[tiro_atual].velx = spd * 2 * math.cos(angle)
@@ -158,7 +149,7 @@ end
 
 -- MARK: - IA Enemy
 function moverInimigo(dt)
-    local angle = math.atan2(posy - inimigo.y, posx - inimigo.x)
+    local angle = angleToPoint(inimigo.x, inimigo.y, posx, posy)
     inimigo.x = inimigo.x + math.cos(angle) * inimigo.spd
     inimigo.y = inimigo.y + math.sin(angle) * inimigo.spd
     inimigo.angle = angle
@@ -179,3 +170,32 @@ function verificarAcerto(tiro)
     end
 end
 
+-- Retorna o ângulo em que p2 está em relação a p1
+function angleToPoint(x1, y1, x2, y2)
+    return math.atan2(y2-y1, x2-x1)
+end
+
+-- Retorna todas as imagens de uma pasta em uma table
+function loadSprites(directory)
+    files = love.filesystem.getDirectoryItems(directory)
+    sprites = {}
+    for i = 1, #files do
+        sprites[i] = love.graphics.newImage(directory .. "/" .. files[i])
+    end
+    return sprites
+end
+-- MARK: Player update
+function PlayerUpdate(direction, dt)
+    -- Atualiza posição
+    posx, posy = posx + direction[1] * spd, posy + direction[2] * spd
+
+    -- Atualiza qual o frame de animação (depois tenho que meter a statemachine pra ajudar a organizar isso, mas pelo menos ta funcionando se souber oq ta fazendo)
+    player.sprites[1].time = player.sprites[1].time + dt
+    if player.sprites[1].time > 1/player.sprites[1].fps then
+        player.frame = player.frame + 1
+        player.sprites[1].time = player.sprites[1].time - 1/player.sprites[1].fps
+    end
+    if player.frame > #player.sprites[1] then
+        player.frame = 1
+    end
+end
