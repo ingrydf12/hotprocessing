@@ -11,8 +11,7 @@ local tiros = {}
 local walls = {}
 
 -- Inimigo variáveis
-local inimigo = {x = 400, y = 400, spd = 2, vida = 2, morto = false, cego = false, flashTime = 0, frame = 1}
-local quantidade_de_inimigos = 1 --ignorar pq eh so um teste
+local inimigos = {}
 
 local tiro_atual = 1
 LIMITE = 10
@@ -29,8 +28,12 @@ function love.load()
     player.sprites[1].fps = 2
     player.sprites[1].time = 0
 
+    -- Cria alguns inimigos na fase
+    for i = 1, 3 do
+        inimigos[i] = createEnemy(100*i,400)
     --Carrega sprite do inimigo (tá estruturado diferente do player pq eu tava com preguiça pra atualizar o codigo no love.draw)
-    inimigo.sprites = loadSprites("assets/sprites/enemy")
+        inimigos[i].sprites = loadSprites("assets/sprites/enemy")
+    end
     
     -- Inicializa o array de tiros
     tiros = {}
@@ -60,21 +63,27 @@ function love.update(dt)
 
     PlayerUpdate(dir, dt)
 
-    -- Atualiza tiros e verifica o estado do inimigo
+    -- Atualiza tiros e verifica o estado dos inimigos
     for i = 1, LIMITE do
         updateTiro(tiros[i])
-        if not inimigo.morto then
-            verificarAcerto(tiros[i])
+        for _ = 1, #inimigos do
+            if not inimigos[_].morto then
+                verificarAcerto(tiros[i], _)
+            end
         end
     end
     
-    if not inimigo.morto and not inimigo.cego then
-        moverInimigo(dt)
+    for i = 1, #inimigos do
+        if not inimigos[i].morto and not inimigos[i].cego then
+            moverInimigo(dt, i)
+        end
     end
 
-    -- Reduz o tempo de flash do inimigo
-    if inimigo.flashTime > 0 then
-        inimigo.flashTime = inimigo.flashTime - dt
+    -- Reduz o tempo de flash dos inimigos
+    for i = 1, #inimigos do
+        if inimigos[i].flashTime > 0 then
+            inimigos[i].flashTime = inimigos[i].flashTime - dt
+        end
     end
 end
 
@@ -95,17 +104,17 @@ function love.draw()
         love.graphics.line(walls[i])
     end
 
-    -- MARK: Visão do inimigo
-    for i = 1, quantidade_de_inimigos do
-        local ponto = collisionPoint({inimigo.x, inimigo.y, posx, posy}, walls[1])
+    -- MARK: Visão dos inimigos
+    for i = 1, #inimigos do
+        local ponto = collisionPoint({inimigos[i].x, inimigos[i].y, posx, posy}, walls[1])
         -- se existir um ponto de interseção E o ponto estiver mais próximo doq o player E eles estiverem na mesma direção
-        if ponto ~= 0 and Dist(inimigo.x, inimigo.y, ponto[1], ponto[2]) < Dist(inimigo.x, inimigo.y, posx, posy) and math.abs(angleToPoint(inimigo.x, inimigo.y, ponto[1], ponto[2]) - angleToPoint(inimigo.x, inimigo.y, posx, posy)) < 0.1 then
+        if ponto ~= 0 and Dist(inimigos[i].x, inimigos[i].y, ponto[1], ponto[2]) < Dist(inimigos[i].x, inimigos[i].y, posx, posy) and math.abs(angleToPoint(inimigos[i].x, inimigos[i].y, ponto[1], ponto[2]) - angleToPoint(inimigos[i].x, inimigos[i].y, posx, posy)) < 0.1 then
             love.graphics.setColor(red)
-            inimigo.cego = true
+            inimigos[i].cego = true
         else
-            inimigo.cego = false
+            inimigos[i].cego = false
         end
-        love.graphics.line(inimigo.x, inimigo.y, posx, posy)
+        love.graphics.line(inimigos[i].x, inimigos[i].y, posx, posy)
     end
     love.graphics.setColor(white)
 
@@ -120,19 +129,21 @@ function love.draw()
     end
 
     -- MARK: - "Knockback" effect on enemys
-    if inimigo.flashTime > 0 then
-        love.graphics.setColor(1, 0, 0) -- Vermelho
-    else
-        love.graphics.setColor(1, 1, 1) -- Branco (cor padrão)
-    end
+    for i = 1, #inimigos do
+        if inimigos[i].flashTime > 0 then
+            love.graphics.setColor(1, 0, 0) -- Vermelho
+        else
+            love.graphics.setColor(1, 1, 1) -- Branco (cor padrão)
+        end
     
-    -- MARK: Sprite enemy load
-    if inimigo.sprites then
-        -- Desenha o sprite do inimigo
-        love.graphics.draw(inimigo.sprites[inimigo.frame], inimigo.x, inimigo.y, inimigo.angle+math.pi/2, 1, 1, inimigo.sprites[inimigo.frame]:getWidth() / 2, inimigo.sprites[inimigo.frame]:getHeight() / 2)
-    else
-        -- Exibe uma mensagem de erro se o sprite não for carregado corretamente
-        love.graphics.print("Erro ao carregar sprite do inimigo", 10, 10)
+        -- MARK: Sprite enemy load
+        if inimigos[i].sprites then
+            -- Desenha o sprite do inimigo
+            love.graphics.draw(inimigos[i].sprites[inimigos[i].frame], inimigos[i].x, inimigos[i].y, inimigos[i].angle+math.pi/2, 1, 1, inimigos[i].sprites[inimigos[i].frame]:getWidth() / 2, inimigos[i].sprites[inimigos[i].frame]:getHeight() / 2)
+        else
+            -- Exibe uma mensagem de erro se o sprite não for carregado corretamente
+            love.graphics.print("Erro ao carregar sprite do inimigo", 10, 10)
+        end
     end
 end
 
@@ -172,23 +183,23 @@ function resetTiro(tiro)
 end
 
 -- MARK: - IA Enemy
-function moverInimigo(dt)
-    local angle = angleToPoint(inimigo.x, inimigo.y, posx, posy)
-    inimigo.x = inimigo.x + math.cos(angle) * inimigo.spd
-    inimigo.y = inimigo.y + math.sin(angle) * inimigo.spd
-    inimigo.angle = angle
+function moverInimigo(dt, i)
+    local angle = angleToPoint(inimigos[i].x, inimigos[i].y, posx, posy)
+    inimigos[i].x = inimigos[i].x + math.cos(angle) * inimigos[i].spd
+    inimigos[i].y = inimigos[i].y + math.sin(angle) * inimigos[i].spd
+    inimigos[i].angle = angle
 end
 
 -- MARK: Check hit on Enemy
-function verificarAcerto(tiro)
+function verificarAcerto(tiro, i)
     if tiro then
-        local distancia = math.sqrt((tiro.x - inimigo.x)^2 + (tiro.y - inimigo.y)^2)
+        local distancia = math.sqrt((tiro.x - inimigos[i].x)^2 + (tiro.y - inimigos[i].y)^2)
         if distancia < 20 then
-            inimigo.vida = inimigo.vida - 1
-            inimigo.flashTime = 0.4 -- 400 ms de piscar
+            inimigos[i].vida = inimigos[i].vida - 1
+            inimigos[i].flashTime = 0.4 -- 400 ms de piscar
             resetTiro(tiro)
-            if inimigo.vida <= 0 then
-                inimigo.morto = true
+            if inimigos[i].vida <= 0 then
+                inimigos[i].morto = true
             end
         end
     end
@@ -227,4 +238,8 @@ end
 
 function Dist(x1, y1, x2, y2)
     return math.sqrt((x1-x2)^2 + (y1-y2)^2)
+end
+
+function createEnemy(xis,yps)
+    return {x = xis, y = yps, spd = 2, vida = 2, morto = false, cego = false, flashTime = 0, frame = 1}
 end
