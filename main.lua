@@ -184,7 +184,7 @@ function loadSprites(directory)
     end
     return sprites
 end
-
+-- MARK: Player update
 function PlayerUpdate(direction, dt)
     -- Atualiza posição
     posx, posy = posx + direction[1] * spd, posy + direction[2] * spd
