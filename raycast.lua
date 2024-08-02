@@ -1,13 +1,22 @@
 function collisionPoint(line1, line2)
-    local x, y
-    denominator = (line1[1]-line1[3])*(line2[2]-line2[4]) - (line1[2]-line1[4])*(line2[1]-line2[3])
-    
-    if denominator ~= 0 then
-        x = ((line1[1]*line1[4] - line1[2]*line1[3]) * (line2[1]-line2[3]) - (line1[1]-line1[3])*(line2[1]*line2[4]-line2[2]*line2[3])) / denominator 
-        y = ((line1[1]*line1[4] - line1[2]*line1[3]) * (line2[2]-line2[4]) - (line1[2]-line1[4])*(line2[1]*line2[4]-line2[2]*line2[3])) / denominator
-        return {x,y}
-    else
-        return 0
+    local t, u
+    x1=line1[1]
+    x2=line1[3]
+    x3=line2[1]
+    x4=line2[3]
+    y1=line1[2]
+    y2=line1[4]
+    y3=line2[2]
+    y4=line2[4]
+
+    deno = (x1-x2)*(y3-y4)-(y1-y2)*(x3-x4)
+    if deno == 0 then
+        return nil
+    end
+    t = ((x1-x3)*(y3-y4) - (y1-y3)*(x3-x4))/deno
+    u = -((x1-x2)*(y1-y3) - (y1-y2)*(x1-x3))/deno
+    if 0<=t and t<=1 and 0<=u and u<=1 then
+        return {x1+(t*(x2-x1)), y1+(t*(y2-y1))}
     end
 end
 

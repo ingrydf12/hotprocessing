@@ -20,6 +20,7 @@ LIMITE = 10
 function love.load()
     love.window.setMode(800, 800)
     love.graphics.setLineWidth(4)
+    love.graphics.setPointSize(5)
 
     require "raycast"
 
@@ -41,8 +42,9 @@ function love.load()
         tiros[i] = {x = -20, y = -20, velx = 0, vely = 0}
     end
 
-    -- Cria uma parede
-    walls[1] = createLine(500,0,500,800)
+    -- Criei umas paredes
+    walls[1] = createLine(500,100,500,600)
+    walls[2] = createLine(100,100,300,400)
 end
 
 -- MARK: Movimentação
@@ -106,17 +108,22 @@ function love.draw()
 
     -- MARK: Visão dos inimigos
     for i = 1, #inimigos do
-        local ponto = collisionPoint({inimigos[i].x, inimigos[i].y, posx, posy}, walls[1])
-        -- se existir um ponto de interseção E o ponto estiver mais próximo doq o player E eles estiverem na mesma direção
-        if ponto ~= 0 and Dist(inimigos[i].x, inimigos[i].y, ponto[1], ponto[2]) < Dist(inimigos[i].x, inimigos[i].y, posx, posy) and math.abs(angleToPoint(inimigos[i].x, inimigos[i].y, ponto[1], ponto[2]) - angleToPoint(inimigos[i].x, inimigos[i].y, posx, posy)) < 0.1 then
-            love.graphics.setColor(red)
-            inimigos[i].cego = true
-        else
-            inimigos[i].cego = false
-        end
         love.graphics.line(inimigos[i].x, inimigos[i].y, posx, posy)
+        for _ = 1, #walls do
+            local ponto = collisionPoint({inimigos[i].x, inimigos[i].y, posx, posy}, walls[_])
+            --se existir um ponto de interseção E o ponto estiver mais próximo doq o player
+            if ponto and Dist(inimigos[i].x, inimigos[i].y, ponto[1], ponto[2]) < Dist(inimigos[i].x, inimigos[i].y, posx, posy) then
+                love.graphics.setColor(red)
+                love.graphics.points(ponto)
+                love.graphics.setColor(white)
+                inimigos[i].cego = true
+                break
+            else
+                inimigos[i].cego = false
+            end
+        end
     end
-    love.graphics.setColor(white)
+    
 
     -- Draw player
     love.graphics.draw(player.sprites[1][player.frame], posx, posy, angleToPoint(posx, posy, mouseX, mouseY)+math.pi/2, 1, 1, player.sprites[1][player.frame]:getWidth()/2, player.sprites[1][player.frame]:getHeight()/2)
