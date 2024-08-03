@@ -52,9 +52,11 @@ function love.load()
     end
 
     -- Criei umas paredes
-    walls[1] = createLine(100,100,100,600)
-    walls[2] = createLine(500,200,500,800)
-    walls[3] = createLine(100,500,650,500)
+    walls[1] = createLine(0,0,800,0)
+    walls[2] = createLine(800,800,800,0)
+    walls[3] = createLine(0,800,0,0)
+    walls[4] = createLine(800,800,0,800)
+    walls[5] = createLine(400,600,400,200)
 end
 
 -- MARK: Movimentação
@@ -98,14 +100,15 @@ function love.update(dt)
         if inimigos[i].flashTime > 0 then
             inimigos[i].flashTime = inimigos[i].flashTime - dt
         end
-
-        inimigos[i].sprites[1].time = inimigos[i].sprites[1].time + dt
-        if inimigos[i].sprites[1].time > 1/inimigos[i].sprites[1].fps then
-            inimigos[i].frame = inimigos[i].frame + 1
-            inimigos[i].sprites[1].time = inimigos[i].sprites[1].time - 1/inimigos[i].sprites[1].fps
-        end
-        if inimigos[i].frame > #inimigos[i].sprites[1] then
-            inimigos[i].frame = 1
+        if not inimigos[i].morto then
+            inimigos[i].sprites[1].time = inimigos[i].sprites[1].time + dt
+            if inimigos[i].sprites[1].time > 1/inimigos[i].sprites[1].fps then
+                inimigos[i].frame = inimigos[i].frame + 1
+                inimigos[i].sprites[1].time = inimigos[i].sprites[1].time - 1/inimigos[i].sprites[1].fps
+            end
+            if inimigos[i].frame > #inimigos[i].sprites[1] then
+                inimigos[i].frame = 1
+            end
         end
     end
 
@@ -134,6 +137,7 @@ function love.draw()
     -- Desenha
     love.graphics.setFont(font)
     love.graphics.print("Wave: " .. currentWave, 10, 10)
+    love.graphics.print("Inimigos: " .. inimigosVivos, 10, 30)
     --waveSystem.counter()
 
     -- MARK: Visão dos inimigos
@@ -141,6 +145,9 @@ function love.draw()
     for i = 1, #inimigos do
         --love.graphics.line(ConvertToCamera({inimigos[i].x, inimigos[i].y, posx, posy}))
         for _ = 1, #walls do
+            if inimigos[i].morto then
+                break
+            end
             local ponto = collisionPoint({inimigos[i].x, inimigos[i].y, posx, posy}, walls[_])
             --se existir um ponto de interseção E o ponto estiver mais próximo doq o player
             if ponto and dist(inimigos[i].x, inimigos[i].y, ponto[1], ponto[2]) < dist(inimigos[i].x, inimigos[i].y, posx, posy) then
@@ -314,7 +321,7 @@ end
 
 -- MARK: Collision
 function collides(circle, line)
-    local rect = {x = line[1]+(line[3]-line[1])/2, y = line[2]+(line[4]-line[2])/2, width = line[3] - line[1], height = line[4] - line [2]}
+    local rect = lineToRect(line)
     local circleDistance = {}
     circleDistance.x = math.abs(circle.x - rect.x)
     circleDistance.y = math.abs(circle.y - rect.y)
@@ -344,7 +351,7 @@ function iniciarWave(wave)
     -- Aumenta 3 inimigos a cada wave 
     inimigosVivos = inimigosPorWave + 3 * wave
     for i = 1, inimigosVivos do
-        inimigos[i] = createEnemy(50*i,50)
+        inimigos[i] = createEnemy(50 + 70*math.floor(i/2),50+700*math.floor(((i-1)/2)%2))
         inimigos[i].sprites[1] = loadSprites("assets/sprites/enemy")
         inimigos[i].sprites[1].fps = 5
         inimigos[i].sprites[1].time = 0
