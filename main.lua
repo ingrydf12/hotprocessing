@@ -1,7 +1,6 @@
 -- MARK: Demark variables
 local posx, posy = 200, 200
 local spd = 5
-local orange = {1,0.5,0}
 local red = {0.7, 0, 0} -- Tiro
 local white = {1,1,1}
 
@@ -16,11 +15,17 @@ local tiros = {}
 local tiro_atual = 1
 LIMITE = 10
 
+-- MARK: Wave variables
+local currentWave = 1
+local inimigosPorWave = 4
+local inimigosVivos = 0
+
 -- MARK: Function Load LOVE
 function love.load()
     love.window.setMode(800, 800)
     love.graphics.setLineWidth(4)
     love.graphics.setPointSize(5)
+    iniciarWave(currentWave)
 
     require "raycast"
 
@@ -90,6 +95,10 @@ function love.update(dt)
             inimigos[i].flashTime = inimigos[i].flashTime - dt
         end
     end
+
+    -- # MARK: Verificar se a wave foi completada
+    verificarWaveCompleta()
+
 end
 
 function love.draw()
@@ -108,6 +117,9 @@ function love.draw()
     for i = 1, #walls do
         love.graphics.line(ConvertToCamera(walls[i]))
     end
+
+    -- Desenha
+    love.graphics.print("Wave: " .. currentWave, 10, 10)
 
     -- MARK: Visão dos inimigos
     -- (talvez tenha que ir pro love.update mas não sei como passar isso pra la)
@@ -210,6 +222,8 @@ function verificarAcerto(tiro, i)
             resetTiro(tiro)
             if inimigos[i].vida <= 0 then
                 inimigos[i].morto = true
+                 -- # MARK: Reduzir contagem de inimigos vivos
+                 inimigosVivos = inimigosVivos - 1
             end
         end
     end
@@ -268,6 +282,7 @@ function dist(x1, y1, x2, y2)
     return math.sqrt((x1-x2)^2 + (y1-y2)^2)
 end
 
+-- MARK: Create new enemy
 function createEnemy(xis,yps)
     return {x = xis, y = yps, spd = 2, vida = 2, morto = false, cego = false, flashTime = 0, frame = 1}
 end
@@ -281,6 +296,7 @@ function ConvertToCamera(points)
     return newpoints
 end
 
+-- MARK: Collision
 function collides(circle, line)
     local rect = {x = line[1]+(line[3]-line[1])/2, y = line[2]+(line[4]-line[2])/2, width = line[3] - line[1], height = line[4] - line [2]}
     local circleDistance = {}
@@ -303,4 +319,27 @@ function collides(circle, line)
     cornerDistance_sq = (circleDistance.x - rect.width/2)^2 + (circleDistance.y - rect.height/2)^2
 
     return (cornerDistance_sq <= (circle.r^2))  
+end
+
+-- MARK: Wave setting
+-- # Função para iniciar uma nova wave
+function iniciarWave(wave)
+    inimigos = {}
+    inimigosVivos = inimigosPorWave * wave
+    for i = 1, inimigosVivos do
+        inimigos[i] = createEnemy(150*(i+1%2),200+200*(i%2))
+        inimigos[i].sprites = loadSprites("assets/sprites/enemy")
+    end
+end
+
+-- Função para verificar se a wave foi completada
+function verificarWaveCompleta()
+    if inimigosVivos <= 0 then
+        currentWave = currentWave + 1
+        iniciarWave(currentWave)
+    end
+end
+
+function createEnemy(x,y)
+    return {x = x, y = y, spd = 1, frame = 1, angle = 0, vida = 3, morto = false, flashTime = 0, cego = false, sprites = {}}
 end
