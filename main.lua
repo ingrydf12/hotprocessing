@@ -353,7 +353,7 @@ function iniciarWave(wave)
     inimigosVivos = inimigosPorWave + 3 * wave
     for i = 1, inimigosVivos do
         inimigos[i] = createEnemy(50 + 70*math.floor(i/2),50+700*math.floor(((i-1)/2)%2))
-        inimigos[i].sprites[1] = loadSprites("assets/sprites/enemy")
+        inimigos[i].sprites[1] = loadSprites("assets/sprites/enemy/walk")
         inimigos[i].sprites[1].fps = 5
         inimigos[i].sprites[1].time = 0
     end
