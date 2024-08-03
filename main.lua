@@ -37,11 +37,13 @@ function love.load()
     player.sprites[1].time = 0 --tempo decorrido, deixa como 0
 
     -- Cria alguns inimigos na fase
-    for i = 1, 4 do
-        inimigos[i] = createEnemy(150*(i+1%2),200+200*(i%2))
-    --Carrega sprite do inimigo (tá estruturado diferente do player pq eu tava com preguiça pra atualizar o codigo no love.draw)
-        inimigos[i].sprites = loadSprites("assets/sprites/enemy")
-    end
+    --for i = 1, 4 do
+        --inimigos[i] = createEnemy(150*(i+1%2),200+200*(i%2))
+    --Carrega sprites do inimigo
+        --inimigos[i].sprites[1] = loadSprites("assets/sprites/enemy")
+        --inimigos[i].sprites[1].fps = 2
+        --inimigos[i].sprites[1].time = 0
+    --end
     
     -- Inicializa o array de tiros
     tiros = {}
@@ -91,10 +93,19 @@ function love.update(dt)
         end
     end
 
-    -- Reduz o tempo de flash dos inimigos
+    -- Reduz o tempo de flash dos inimigos e atualiza o frame da animação
     for i = 1, #inimigos do
         if inimigos[i].flashTime > 0 then
             inimigos[i].flashTime = inimigos[i].flashTime - dt
+        end
+
+        inimigos[i].sprites[1].time = inimigos[i].sprites[1].time + dt
+        if inimigos[i].sprites[1].time > 1/inimigos[i].sprites[1].fps then
+            inimigos[i].frame = inimigos[i].frame + 1
+            inimigos[i].sprites[1].time = inimigos[i].sprites[1].time - 1/inimigos[i].sprites[1].fps
+        end
+        if inimigos[i].frame > #inimigos[i].sprites[1] then
+            inimigos[i].frame = 1
         end
     end
 
@@ -165,7 +176,7 @@ function love.draw()
         -- MARK: Sprite enemy load
         if inimigos[i].sprites then
             -- Desenha o sprite do inimigo
-            love.graphics.draw(inimigos[i].sprites[inimigos[i].frame], inimigos[i].x-camera.x+400, inimigos[i].y-camera.y+400, inimigos[i].angle+math.pi/2, 1, 1, inimigos[i].sprites[inimigos[i].frame]:getWidth() / 2, inimigos[i].sprites[inimigos[i].frame]:getHeight() / 2)
+            love.graphics.draw(inimigos[i].sprites[1][inimigos[i].frame], inimigos[i].x-camera.x+400, inimigos[i].y-camera.y+400, inimigos[i].angle+math.pi/2, 1, 1, inimigos[i].sprites[1][inimigos[i].frame]:getWidth() / 2, inimigos[i].sprites[1][inimigos[i].frame]:getHeight() / 2)
         else
             -- Exibe uma mensagem de erro se o sprite não for carregado corretamente
             love.graphics.print("Erro ao carregar sprite do inimigo", 10, 10)
@@ -289,7 +300,7 @@ end
 
 -- MARK: Create new enemy
 function createEnemy(xis,yps)
-    return {x = xis, y = yps, spd = 2, vida = 2, morto = false, cego = false, flashTime = 0, frame = 1}
+    return {x = xis, y = yps, spd = 2, vida = 2, morto = false, cego = false, flashTime = 0, frame = 1, sprites = {}}
 end
 
 function ConvertToCamera(points)
@@ -331,10 +342,12 @@ end
 function iniciarWave(wave)
     inimigos = {}
     -- Aumenta 3 inimigos a cada wave 
-    inimigosVivos = inimigosPorWave + 3
+    inimigosVivos = inimigosPorWave + 3 * wave
     for i = 1, inimigosVivos do
-        inimigos[i] = createEnemy(150*(i+1%2),200+200*(i%2))
-        inimigos[i].sprites = loadSprites("assets/sprites/enemy")
+        inimigos[i] = createEnemy(50*i,50)
+        inimigos[i].sprites[1] = loadSprites("assets/sprites/enemy")
+        inimigos[i].sprites[1].fps = 5
+        inimigos[i].sprites[1].time = 0
     end
 end
 
