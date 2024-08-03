@@ -170,6 +170,7 @@ function love.draw()
             -- Exibe uma mensagem de erro se o sprite não for carregado corretamente
             love.graphics.print("Erro ao carregar sprite do inimigo", 10, 10)
         end
+
     end
 end
 
