@@ -1,6 +1,7 @@
 -- MARK: Demark variables
 local posx, posy = 200, 200
 local spd = 5
+local spdEnemy = 2
 local red = {0.7, 0, 0} -- Tiro
 local white = {1,1,1}
 
@@ -342,10 +343,11 @@ end
 function verificarWaveCompleta()
     if inimigosVivos <= 0 then
         currentWave = currentWave + 1
+        spdEnemy = spdEnemy + 0.5 -- Aumenta a velocidade a cada wave
         iniciarWave(currentWave)
     end
 end
 
 function createEnemy(x,y)
-    return {x = x, y = y, spd = 1, frame = 1, angle = 0, vida = 3, morto = false, flashTime = 0, cego = false, sprites = {}}
+    return {x = x, y = y, spd = spdEnemy, frame = 1, angle = 0, vida = 3, morto = false, flashTime = 0, cego = false, sprites = {}}
 end
