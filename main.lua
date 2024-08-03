@@ -25,8 +25,10 @@ function love.load()
     love.window.setMode(800, 800)
     love.graphics.setLineWidth(4)
     love.graphics.setPointSize(5)
+    font = love.graphics.newFont("assets/fonts/superstar_memesbruh03.ttf", 24)
     iniciarWave(currentWave)
 
+    -- require "waveSystem"
     require "raycast"
 
     -- Carrega animação teste do player
@@ -119,7 +121,9 @@ function love.draw()
     end
 
     -- Desenha
+    love.graphics.setFont(font)
     love.graphics.print("Wave: " .. currentWave, 10, 10)
+    --waveSystem.counter()
 
     -- MARK: Visão dos inimigos
     -- (talvez tenha que ir pro love.update mas não sei como passar isso pra la)
@@ -325,7 +329,8 @@ end
 -- # Função para iniciar uma nova wave
 function iniciarWave(wave)
     inimigos = {}
-    inimigosVivos = inimigosPorWave * wave
+    -- Aumenta 3 inimigos a cada wave 
+    inimigosVivos = inimigosPorWave + 3
     for i = 1, inimigosVivos do
         inimigos[i] = createEnemy(150*(i+1%2),200+200*(i%2))
         inimigos[i].sprites = loadSprites("assets/sprites/enemy")
