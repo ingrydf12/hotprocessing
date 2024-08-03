@@ -11,7 +11,7 @@ local inimigos = {}
 local walls = {}
 
 local camera = {x = 400, y = 400}
-
+local chao = {}
 local tiros = {}
 local tiro_atual = 1
 LIMITE = 10
@@ -46,6 +46,8 @@ function love.load()
         --inimigos[i].sprites[1].time = 0
     --end
     
+    chao = love.graphics.newImage("assets/sprites/floor/chao.png")
+
     -- Inicializa o array de tiros
     tiros = {}
     for i = 1, LIMITE do
@@ -96,11 +98,14 @@ function love.update(dt)
         end
     end
 
-    -- Reduz o tempo de flash dos inimigos e atualiza o frame da animação
+    -- MARK: Enemy update
+    -- Atualiza os inimigos (flashTime, animação, visão do player)
     for i = 1, #inimigos do
         if inimigos[i].flashTime > 0 then
             inimigos[i].flashTime = inimigos[i].flashTime - dt
         end
+
+        -- Animação dos inimigos
         if not inimigos[i].morto then
             inimigos[i].sprites[1].time = inimigos[i].sprites[1].time + dt
             if inimigos[i].sprites[1].time > 1/inimigos[i].sprites[1].fps then
@@ -111,6 +116,24 @@ function love.update(dt)
                 inimigos[i].frame = 1
             end
         end
+
+
+        -- MARK: Visão dos inimigos
+        for _ = 1, #walls do
+            if inimigos[i].morto then
+                break
+            end
+            local ponto = collisionPoint({inimigos[i].x, inimigos[i].y, posx, posy}, walls[_])
+            --se existir um ponto de interseção E o ponto estiver mais próximo doq o player
+            if ponto and dist(inimigos[i].x, inimigos[i].y, ponto[1], ponto[2]) < dist(inimigos[i].x, inimigos[i].y, posx, posy) then
+                inimigos[i].cego = true
+                break
+            else
+                inimigos[i].cego = false
+            end
+        end
+
+
     end
 
     -- # MARK: Verificar se a wave foi completada
@@ -126,6 +149,9 @@ function love.draw()
 
     love.graphics.setColor(white)
 
+    --chao
+    love.graphics.draw(chao, 800-camera.x+400, 800-camera.y + 400, 0, 4,4,chao:getWidth(),chao:getHeight())
+
     -- Crosshair
     love.graphics.line(mouseX - 20, mouseY, mouseX + 20, mouseY)
     love.graphics.line(mouseX, mouseY - 18, mouseX, mouseY + 18)
@@ -140,28 +166,6 @@ function love.draw()
     love.graphics.print("Wave: " .. currentWave, 10, 10)
     love.graphics.print("Inimigos: " .. inimigosVivos, 10, 30)
     --waveSystem.counter()
-
-    -- MARK: Visão dos inimigos
-    -- (talvez tenha que ir pro love.update mas não sei como passar isso pra la)
-    for i = 1, #inimigos do
-        --love.graphics.line(ConvertToCamera({inimigos[i].x, inimigos[i].y, posx, posy}))
-        for _ = 1, #walls do
-            if inimigos[i].morto then
-                break
-            end
-            local ponto = collisionPoint({inimigos[i].x, inimigos[i].y, posx, posy}, walls[_])
-            --se existir um ponto de interseção E o ponto estiver mais próximo doq o player
-            if ponto and dist(inimigos[i].x, inimigos[i].y, ponto[1], ponto[2]) < dist(inimigos[i].x, inimigos[i].y, posx, posy) then
-                love.graphics.setColor(red)
-                love.graphics.points(ponto[1] - camera.x + 400,ponto[2]-camera.y +400)
-                love.graphics.setColor(white)
-                inimigos[i].cego = true
-                break
-            else
-                inimigos[i].cego = false
-            end
-        end
-    end
 
     -- Draw player
     love.graphics.draw(player.sprites[1][player.frame], posx-camera.x+400, posy-camera.y+400, angleToPoint(posx-camera.x+400, posy-camera.y+400, mouseX, mouseY)+math.pi/2, 1, 1, player.sprites[1][player.frame]:getWidth()/2, player.sprites[1][player.frame]:getHeight()/2)
@@ -189,6 +193,10 @@ function love.draw()
             -- Exibe uma mensagem de erro se o sprite não for carregado corretamente
             love.graphics.print("Erro ao carregar sprite do inimigo", 10, 10)
         end
+        -- desenha uma linha caso ele te veja
+        --if not inimigos[i].cego and not inimigos[i].morto then
+            --love.graphics.line(ConvertToCamera({inimigos[i].x, inimigos[i].y, posx, posy}))
+        --end
 
     end
 end
