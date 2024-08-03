@@ -4,15 +4,15 @@ local spd = 5
 local orange = {1,0.5,0}
 local red = {0.7, 0, 0} -- Tiro
 local white = {1,1,1}
-local pele = {1, 0.8, 0.6}
 
-local player = {frame = 1, sprites = {}}
-local tiros = {}
+local player = {frame = 1, sprites = {}, hitbox = {x = posx, y = posy, r = 20}}
+
+local inimigos = {}
 local walls = {}
 
--- Inimigo variáveis
-local inimigos = {}
+local camera = {x = 400, y = 400}
 
+local tiros = {}
 local tiro_atual = 1
 LIMITE = 10
 
@@ -27,11 +27,11 @@ function love.load()
     -- Carrega animação teste do player
     player.sprites[1] = loadSprites("assets/sprites/player")
     player.sprites[1].fps = 2
-    player.sprites[1].time = 0
+    player.sprites[1].time = 0 --tempo decorrido, deixa como 0
 
     -- Cria alguns inimigos na fase
-    for i = 1, 3 do
-        inimigos[i] = createEnemy(100*i,400)
+    for i = 1, 4 do
+        inimigos[i] = createEnemy(150*(i+1%2),200+200*(i%2))
     --Carrega sprite do inimigo (tá estruturado diferente do player pq eu tava com preguiça pra atualizar o codigo no love.draw)
         inimigos[i].sprites = loadSprites("assets/sprites/enemy")
     end
@@ -43,8 +43,9 @@ function love.load()
     end
 
     -- Criei umas paredes
-    walls[1] = createLine(500,100,500,600)
-    walls[2] = createLine(100,100,300,400)
+    walls[1] = createLine(100,100,100,600)
+    walls[2] = createLine(500,200,500,800)
+    walls[3] = createLine(100,500,650,500)
 end
 
 -- MARK: Movimentação
@@ -64,6 +65,8 @@ function love.update(dt)
     end
 
     PlayerUpdate(dir, dt)
+
+    camera.x, camera.y =  posx, posy
 
     -- Atualiza tiros e verifica o estado dos inimigos
     for i = 1, LIMITE do
@@ -103,18 +106,19 @@ function love.draw()
     
     -- Paredes (só pra saber onde estão enquanto não tem sprite)
     for i = 1, #walls do
-        love.graphics.line(walls[i])
+        love.graphics.line(ConvertToCamera(walls[i]))
     end
 
     -- MARK: Visão dos inimigos
+    -- (talvez tenha que ir pro love.update mas não sei como passar isso pra la)
     for i = 1, #inimigos do
-        love.graphics.line(inimigos[i].x, inimigos[i].y, posx, posy)
+        --love.graphics.line(ConvertToCamera({inimigos[i].x, inimigos[i].y, posx, posy}))
         for _ = 1, #walls do
             local ponto = collisionPoint({inimigos[i].x, inimigos[i].y, posx, posy}, walls[_])
             --se existir um ponto de interseção E o ponto estiver mais próximo doq o player
-            if ponto and Dist(inimigos[i].x, inimigos[i].y, ponto[1], ponto[2]) < Dist(inimigos[i].x, inimigos[i].y, posx, posy) then
+            if ponto and dist(inimigos[i].x, inimigos[i].y, ponto[1], ponto[2]) < dist(inimigos[i].x, inimigos[i].y, posx, posy) then
                 love.graphics.setColor(red)
-                love.graphics.points(ponto)
+                love.graphics.points(ponto[1] - camera.x + 400,ponto[2]-camera.y +400)
                 love.graphics.setColor(white)
                 inimigos[i].cego = true
                 break
@@ -123,16 +127,15 @@ function love.draw()
             end
         end
     end
-    
 
     -- Draw player
-    love.graphics.draw(player.sprites[1][player.frame], posx, posy, angleToPoint(posx, posy, mouseX, mouseY)+math.pi/2, 1, 1, player.sprites[1][player.frame]:getWidth()/2, player.sprites[1][player.frame]:getHeight()/2)
-    
+    love.graphics.draw(player.sprites[1][player.frame], posx-camera.x+400, posy-camera.y+400, angleToPoint(posx-camera.x+400, posy-camera.y+400, mouseX, mouseY)+math.pi/2, 1, 1, player.sprites[1][player.frame]:getWidth()/2, player.sprites[1][player.frame]:getHeight()/2)
+
     -- Draw tiros
     for i = 1, LIMITE do
         local tiro = tiros[i]
         love.graphics.setColor(red)
-        love.graphics.rectangle("fill", tiro.x, tiro.y, 10, 20)
+        love.graphics.rectangle("fill", tiro.x-camera.x+400, tiro.y-camera.y+400, 10, 20)
     end
 
     -- MARK: - "Knockback" effect on enemys
@@ -146,7 +149,7 @@ function love.draw()
         -- MARK: Sprite enemy load
         if inimigos[i].sprites then
             -- Desenha o sprite do inimigo
-            love.graphics.draw(inimigos[i].sprites[inimigos[i].frame], inimigos[i].x, inimigos[i].y, inimigos[i].angle+math.pi/2, 1, 1, inimigos[i].sprites[inimigos[i].frame]:getWidth() / 2, inimigos[i].sprites[inimigos[i].frame]:getHeight() / 2)
+            love.graphics.draw(inimigos[i].sprites[inimigos[i].frame], inimigos[i].x-camera.x+400, inimigos[i].y-camera.y+400, inimigos[i].angle+math.pi/2, 1, 1, inimigos[i].sprites[inimigos[i].frame]:getWidth() / 2, inimigos[i].sprites[inimigos[i].frame]:getHeight() / 2)
         else
             -- Exibe uma mensagem de erro se o sprite não for carregado corretamente
             love.graphics.print("Erro ao carregar sprite do inimigo", 10, 10)
@@ -161,7 +164,7 @@ function love.mousepressed(x, y, button, istouch, presses)
             tiro_atual = 1
         end
 
-        local angle = angleToPoint(posx, posy, x, y)
+        local angle = angleToPoint(posx-camera.x+400, posy-camera.y+400, x, y)
         tiros[tiro_atual].x = posx
         tiros[tiro_atual].y = posy
         tiros[tiro_atual].velx = spd * 2 * math.cos(angle)
@@ -175,7 +178,7 @@ function updateTiro(tiro)
         tiro.x = tiro.x + tiro.velx
         tiro.y = tiro.y + tiro.vely
         
-        if tiro.x >= 800 or tiro.y >= 800 or tiro.x < 0 or tiro.y < 0 then
+        if tiro.x >= camera.x+400 or tiro.y >= camera.y+400 or tiro.x < camera.x-400 or tiro.y < camera.y-400 then
             resetTiro(tiro)
         end
     end
@@ -183,8 +186,8 @@ end
 
 -- MARK: Reset Tiro
 function resetTiro(tiro)
-    tiro.x = -20
-    tiro.y = -20
+    tiro.x = -1500
+    tiro.y = -1500
     tiro.velx = 0
     tiro.vely = 0
 end
@@ -229,8 +232,26 @@ end
 
 -- MARK: Player update
 function PlayerUpdate(direction, dt)
+    local collide_count = {0,0}
     -- Atualiza posição
-    posx, posy = posx + direction[1] * spd, posy + direction[2] * spd
+    for i = 1, #walls do
+        player.hitbox.x = posx + direction[1] * spd
+        if collides(player.hitbox, walls[i]) then
+            collide_count[1] = collide_count[1] + 1
+        end
+        player.hitbox.x = posx
+        player.hitbox.y = posy + direction[2] * spd
+        if collides(player.hitbox, walls[i]) then
+            collide_count[2] = collide_count[2] + 1
+        end
+        player.hitbox.y = posy
+    end
+    if collide_count[1] == 0 then
+        posx = posx + direction[1] * spd
+    end
+    if collide_count[2] == 0 then
+        posy = posy + direction[2] * spd
+    end
 
     -- Atualiza qual o frame de animação (depois tenho que meter a statemachine pra ajudar a organizar isso, mas pelo menos ta funcionando se souber oq ta fazendo)
     player.sprites[1].time = player.sprites[1].time + dt
@@ -243,10 +264,43 @@ function PlayerUpdate(direction, dt)
     end
 end
 
-function Dist(x1, y1, x2, y2)
+function dist(x1, y1, x2, y2)
     return math.sqrt((x1-x2)^2 + (y1-y2)^2)
 end
 
 function createEnemy(xis,yps)
     return {x = xis, y = yps, spd = 2, vida = 2, morto = false, cego = false, flashTime = 0, frame = 1}
+end
+
+function ConvertToCamera(points)
+    local newpoints = {}
+    newpoints[1] = points[1] - camera.x + 400
+    newpoints[2] = points[2] - camera.y + 400
+    newpoints[3] = points[3] - camera.x + 400
+    newpoints[4] = points[4] - camera.y + 400
+    return newpoints
+end
+
+function collides(circle, line)
+    local rect = {x = line[1]+(line[3]-line[1])/2, y = line[2]+(line[4]-line[2])/2, width = line[3] - line[1], height = line[4] - line [2]}
+    local circleDistance = {}
+    circleDistance.x = math.abs(circle.x - rect.x)
+    circleDistance.y = math.abs(circle.y - rect.y)
+
+    if (circleDistance.x > (rect.width/2 + circle.r)) then
+        return false
+    end
+    if (circleDistance.y > (rect.height/2 + circle.r)) then
+        return false
+    end
+    if (circleDistance.x <= (rect.width/2)) then
+        return true
+    end
+    if (circleDistance.y <= (rect.height/2)) then
+        return true
+    end
+
+    cornerDistance_sq = (circleDistance.x - rect.width/2)^2 + (circleDistance.y - rect.height/2)^2
+
+    return (cornerDistance_sq <= (circle.r^2))  
 end
