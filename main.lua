@@ -121,9 +121,9 @@ function love.update(dt)
             inimigos[i].flashTime = inimigos[i].flashTime - dt
         end
 
-        -- Animação dos inimigos
+        -- Animação dos inimigos mortos
         if inimigos[i].morto then
-            updateFrame(inimigos[i].anims[2], dt) -- Atualiza animação de morte
+            updateFrame(inimigos[i].anims[2], dt)
         else
             updateFrame(inimigos[i].anims[1], dt) -- Atualiza animação normal
         end
@@ -369,7 +369,7 @@ function iniciarWave(wave)
     for i = 1, inimigosVivos do
         inimigos[i] = createEnemy(50 + 70*math.floor(i/2),50+700*math.floor(((i-1)/2)%2))
         inimigos[i].anims[1] = newAnim("assets/sprites/enemy/walk", 5) -- Animação de andar
-        inimigos[i].anims[2] = newAnim("assets/sprites/enemy/enemy-death", 5) -- Animação de morte
+        inimigos[i].anims[2] = newAnim("assets/sprites/enemy/enemy-death", 1) -- Animação de morte
         -- inimigos[i].anims[2] = newAnim ("assets/sprites/enemy/death", 5)
     end
     -- Aumenta o tamanho das paredes a partir da wave 5
