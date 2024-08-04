@@ -7,7 +7,7 @@ local white = {1,1,1}
 local black = {0,0,0}
 
 local player = {frame = 1, anims = {}, hitbox = {x = posx, y = posy, r = 20}}
-local camera = {x = posx, y = posy}
+--local camera = {x = posx, y = posy}
 local inimigos = {}
 local walls = {}
 
@@ -96,7 +96,7 @@ function love.update(dt)
     end
 
     PlayerUpdate(dir, dt)
-    camera = {x = clamp(posx, wallSize/2-50, wallSize/2+50), y = clamp(posy, wallSize/2-50, wallSize/2+50)}
+    --camera = {x = clamp(posx, wallSize/2-50, wallSize/2+50), y = clamp(posy, wallSize/2-50, wallSize/2+50)}
 
     -- Atualiza tiros e verifica o estado dos inimigos
     for i = 1, LIMITE do
@@ -170,7 +170,7 @@ function love.draw()
     local mouseY = love.mouse.getY()
     
     love.graphics.push()
-    love.graphics.translate(-camera.x+600, -camera.y+400)
+    love.graphics.translate(-posx+600, -posy+400)
 
     love.graphics.setColor(white)
 
@@ -217,7 +217,7 @@ function love.draw()
     end
 
     if frame then
-        love.graphics.draw(frame, inimigos[i].x-camera.x+400, inimigos[i].y-camera.y+400, inimigos[i].angle+math.pi/2, 1, 1, frame:getWidth() / 2, frame:getHeight() / 2)
+        love.graphics.draw(frame, inimigos[i].x, inimigos[i].y, inimigos[i].angle+math.pi/2, 1, 1, frame:getWidth() / 2, frame:getHeight() / 2)
     else
         love.graphics.print("Erro ao carregar sprite do inimigo", 10, 10)
         end
@@ -231,15 +231,6 @@ function love.draw()
     -- Crosshair
     love.graphics.line(mouseX - 20, mouseY, mouseX + 20, mouseY)
     love.graphics.line(mouseX, mouseY - 18, mouseX, mouseY + 18)
-
-    -- Desenha UI
-    love.graphics.setFont(font)
-    love.graphics.setColor(black)
-    love.graphics.rectangle("fill",0,0,140,60)
-    love.graphics.setColor(white)
-    love.graphics.print("Wave: " .. currentWave, 10, 10)
-    love.graphics.print("Inimigos: " .. inimigosVivos, 10, 30)
-    --waveSystem.counter()
 end
 
 function love.mousepressed(x, y, button, istouch, presses)
@@ -249,7 +240,7 @@ function love.mousepressed(x, y, button, istouch, presses)
             tiro_atual = 1
         end
 
-        local angle = angleToPoint(600, 400, y, y)
+        local angle = angleToPoint(600, 400, x, y)
         tiros[tiro_atual].x = posx
         tiros[tiro_atual].y = posy
         tiros[tiro_atual].velx = spdTiro * 2 * math.cos(angle)
