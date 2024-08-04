@@ -4,9 +4,10 @@ local spd = 5
 local spdEnemy = 2
 local red = {0.7, 0, 0} -- Tiro
 local white = {1,1,1}
+local black = {0,0,0}
 
 local player = {frame = 1, anims = {}, hitbox = {x = posx, y = posy, r = 20}}
-
+local camera = {}
 local inimigos = {}
 local walls = {}
 
@@ -18,15 +19,24 @@ LIMITE = 10
 
 -- MARK: Wave variables
 local currentWave = 1
-local inimigosPorWave = 4
+local inimigosPorWave = 3
 local inimigosVivos = 0
+
+local wallSizeIncreaseWave = 5 -- Wave a partir da qual o tamanho aumenta
+local floorScale = 1 -- Escala padrão do piso
 
 -- MARK: Function Load LOVE
 function love.load()
-    love.window.setMode(800, 800)
+    love.window.setMode(1200, 800)
     love.graphics.setLineWidth(4)
     love.graphics.setPointSize(5)
+    -- UX
     font = love.graphics.newFont("assets/fonts/superstar_memesbruh03.ttf", 24)
+    sound = love.audio.newSource("assets/sfx/tele_001.wav", "stream")
+    masterVolume = 0.2
+
+    -- Set volume
+    sound:setVolume(masterVolume)
 
     -- require "waveSystem"
     require "raycast"
@@ -45,13 +55,34 @@ function love.load()
         tiros[i] = {x = -1500, y = -1500, velx = 0, vely = 0}
     end
 
-    -- Criei umas paredes
-    walls[1] = createLine(0,0,800,0)
-    walls[2] = createLine(800,800,800,0)
-    walls[3] = createLine(0,800,0,0)
-    walls[4] = createLine(800,800,0,800)
-    walls[5] = createLine(400,600,400,200)
 end
+
+-- MARK: Createa Walls Function
+function createWalls()
+    walls = {}
+    local currentScale = 1  -- Escala padrão
+
+    -- Verifica se a wave atual está acima do limite de aumento de tamanho das paredes
+    if currentWave > wallSizeIncreaseWave then
+        -- Aumenta o tamanho das paredes a partir da wave 5
+        currentScale = 1 * 1.2
+    end
+
+    -- Ajusta o tamanho das paredes com base na escala atual
+    local scaledWallSize = wallSize * currentScale
+
+    -- Cria as paredes com base na escala atual
+    walls[1] = createLine(0, 0, scaledWallSize, 0)
+    walls[2] = createLine(scaledWallSize, 0, scaledWallSize, scaledWallSize)
+    walls[3] = createLine(scaledWallSize, scaledWallSize, 0, scaledWallSize)
+    walls[4] = createLine(0, scaledWallSize, 0, 0)
+
+    -- Adiciona uma parede central se necessário
+    walls[5] = createLine(scaledWallSize / 2, scaledWallSize * 3 / 4, scaledWallSize / 2, scaledWallSize / 4)
+
+end
+
+
 
 -- MARK: Movimentação
 function love.update(dt)
@@ -103,6 +134,7 @@ function love.update(dt)
         -- MARK: Visão dos inimigos
         for _ = 1, #walls do
             if inimigos[i].morto then
+                
                 break
             end
             local ponto = collisionPoint({inimigos[i].x, inimigos[i].y, posx, posy}, walls[_])
@@ -123,6 +155,7 @@ function love.update(dt)
 
 end
 
+-- MARK: - DRAW
 function love.draw()
     love.graphics.clear(0, 0, 0, 1)
     
@@ -141,12 +174,6 @@ function love.draw()
     for i = 1, #walls do
         love.graphics.line(walls[i])
     end
-
-    -- Desenha UI
-    love.graphics.setFont(font)
-    love.graphics.print("Wave: " .. currentWave, 10, 10)
-    love.graphics.print("Inimigos: " .. inimigosVivos, 10, 30)
-    --waveSystem.counter()
 
     -- Draw player
     local frame = getFrame(player.anims[1])
@@ -239,6 +266,7 @@ function verificarAcerto(tiro, i)
             inimigos[i].vida = inimigos[i].vida - 1
             inimigos[i].flashTime = 0.4 -- 400 ms de piscar
             resetTiro(tiro)
+            love.audio.play(sound)
             if inimigos[i].vida <= 0 then
                 inimigos[i].morto = true
                  -- # MARK: Reduzir contagem de inimigos vivos
@@ -323,7 +351,16 @@ function iniciarWave(wave)
     for i = 1, inimigosVivos do
         inimigos[i] = createEnemy(50 + 70*math.floor(i/2),50+700*math.floor(((i-1)/2)%2))
         inimigos[i].anims[1] = newAnim("assets/sprites/enemy/walk", 5)
+        -- inimigos[i].anims[2] = newAnim ("assets/sprites/enemy/death", 5)
     end
+    -- Aumenta o tamanho das paredes a partir da wave 5
+    if currentWave >= wallSizeIncreaseWave then
+        wallSize = 1200
+    else
+        wallSize = 800
+    end
+
+    createWalls()
 end
 
 -- Função para verificar se a wave foi completada
@@ -337,4 +374,14 @@ end
 
 function createEnemy(x,y)
     return {x = x, y = y, spd = spdEnemy, frame = 1, angle = 0, vida = 3, morto = false, flashTime = 0, cego = false, anims = {}}
+end
+
+function clamp(a, min, max)
+    if a < min then
+        return min
+    end
+    if a > max then
+        return max
+    end
+    return a
 end
