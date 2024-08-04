@@ -10,7 +10,6 @@ local player = {frame = 1, anims = {}, hitbox = {x = posx, y = posy, r = 20}}
 local inimigos = {}
 local walls = {}
 
-local camera = {x = 400, y = 400}
 local chao = {}
 local tiros = {}
 local spdTiro = 6
@@ -72,8 +71,6 @@ function love.update(dt)
 
     PlayerUpdate(dir, dt)
 
-    camera.x, camera.y =  posx, posy
-
     -- Atualiza tiros e verifica o estado dos inimigos
     for i = 1, LIMITE do
         updateTiro(tiros[i])
@@ -131,19 +128,18 @@ function love.draw()
     
     local mouseX = love.mouse.getX()
     local mouseY = love.mouse.getY()
+    
+    love.graphics.push()
+    love.graphics.translate(-posx + 400, -posy + 400)
 
     love.graphics.setColor(white)
 
     --chao
-    love.graphics.draw(chao, 800-camera.x+400,800-camera.y + 400, 0, 4,4,chao:getWidth(),chao:getHeight())
-
-    -- Crosshair
-    love.graphics.line(mouseX - 20, mouseY, mouseX + 20, mouseY)
-    love.graphics.line(mouseX, mouseY - 18, mouseX, mouseY + 18)
+    love.graphics.draw(chao, 800,800, 0, 4,4,chao:getWidth(),chao:getHeight())
     
     -- Paredes (só pra saber onde estão enquanto não tem sprite)
     for i = 1, #walls do
-        love.graphics.line(ConvertToCamera(walls[i]))
+        love.graphics.line(walls[i])
     end
 
     -- Desenha UI
@@ -154,13 +150,13 @@ function love.draw()
 
     -- Draw player
     local frame = getFrame(player.anims[1])
-    love.graphics.draw(frame, posx-camera.x+400, posy-camera.y+400, angleToPoint(posx-camera.x+400, posy-camera.y+400, mouseX, mouseY)+math.pi/2, 1, 1, frame:getWidth()/2, frame:getHeight()/2)
+    love.graphics.draw(frame, posx, posy, angleToPoint(400, 400, mouseX, mouseY)+math.pi/2, 1, 1, frame:getWidth()/2, frame:getHeight()/2)
 
     -- Draw tiros
     for i = 1, LIMITE do
         local tiro = tiros[i]
         love.graphics.setColor(red)
-        love.graphics.rectangle("fill", tiro.x-camera.x+400, tiro.y-camera.y+400, 10, 20)
+        love.graphics.rectangle("fill", tiro.x, tiro.y, 10, 20)
     end
 
     -- MARK: - "Knockback" effect on enemys
@@ -175,17 +171,21 @@ function love.draw()
         frame = getFrame(inimigos[i].anims[1])
         if inimigos[i].anims[1] then
             -- Desenha o sprite do inimigo
-            love.graphics.draw(frame, inimigos[i].x-camera.x+400, inimigos[i].y-camera.y+400, inimigos[i].angle+math.pi/2, 1, 1, frame:getWidth() / 2, frame:getHeight() / 2)
+            love.graphics.draw(frame, inimigos[i].x, inimigos[i].y, inimigos[i].angle+math.pi/2, 1, 1, frame:getWidth() / 2, frame:getHeight() / 2)
         else
             -- Exibe uma mensagem de erro se o sprite não for carregado corretamente
             love.graphics.print("Erro ao carregar sprite do inimigo", 10, 10)
         end
         -- desenha uma linha caso ele te veja
         --if not inimigos[i].cego and not inimigos[i].morto then
-            --love.graphics.line(ConvertToCamera({inimigos[i].x, inimigos[i].y, posx, posy}))
+            --love.graphics.line(inimigos[i].x, inimigos[i].y, posx, posy))
         --end
-
+    
     end
+    love.graphics.pop()
+    -- Crosshair
+    love.graphics.line(mouseX - 20, mouseY, mouseX + 20, mouseY)
+    love.graphics.line(mouseX, mouseY - 18, mouseX, mouseY + 18)
 end
 
 function love.mousepressed(x, y, button, istouch, presses)
@@ -195,7 +195,7 @@ function love.mousepressed(x, y, button, istouch, presses)
             tiro_atual = 1
         end
 
-        local angle = angleToPoint(posx-camera.x+400, posy-camera.y+400, x, y)
+        local angle = angleToPoint(400, 400, x, y)
         tiros[tiro_atual].x = posx
         tiros[tiro_atual].y = posy
         tiros[tiro_atual].velx = spdTiro * 2 * math.cos(angle)
@@ -209,7 +209,7 @@ function updateTiro(tiro)
         tiro.x = tiro.x + tiro.velx
         tiro.y = tiro.y + tiro.vely
         
-        if tiro.x >= camera.x+400 or tiro.y >= camera.y+400 or tiro.x < camera.x-400 or tiro.y < camera.y-400 then
+        if tiro.x >= posx+400 or tiro.y >= posy+400 or tiro.x < posx-400 or tiro.y < posy-400 then
             resetTiro(tiro)
         end
     end
@@ -287,15 +287,6 @@ end
 -- MARK: Create new enemy
 function createEnemy(xis,yps)
     return {x = xis, y = yps, spd = 2, vida = 2, morto = false, cego = false, flashTime = 0, frame = 1, anims = {}}
-end
-
-function ConvertToCamera(points)
-    local newpoints = {}
-    newpoints[1] = points[1] - camera.x + 400
-    newpoints[2] = points[2] - camera.y + 400
-    newpoints[3] = points[3] - camera.x + 400
-    newpoints[4] = points[4] - camera.y + 400
-    return newpoints
 end
 
 -- MARK: Collision
