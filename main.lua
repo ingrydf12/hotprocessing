@@ -7,7 +7,7 @@ local white = {1,1,1}
 local black = {0,0,0}
 
 local player = {frame = 1, anims = {}, hitbox = {x = posx, y = posy, r = 20}}
-local camera = {}
+local camera = {x = posx, y = posy}
 local inimigos = {}
 local walls = {}
 
@@ -57,7 +57,7 @@ function love.load()
 
 end
 
--- MARK: Createa Walls Function
+-- MARK: Create Walls Function
 function createWalls()
     walls = {}
     local currentScale = 1  -- Escala padrão
@@ -101,6 +101,7 @@ function love.update(dt)
     end
 
     PlayerUpdate(dir, dt)
+    camera = {x = clamp(posx, wallSize/2-50, wallSize/2+50), y = clamp(posy, wallSize/2-50, wallSize/2+50)}
 
     -- Atualiza tiros e verifica o estado dos inimigos
     for i = 1, LIMITE do
@@ -163,12 +164,12 @@ function love.draw()
     local mouseY = love.mouse.getY()
     
     love.graphics.push()
-    love.graphics.translate(-posx + 400, -posy + 400)
+    love.graphics.translate(-camera.x+600, -camera.y+400)
 
     love.graphics.setColor(white)
 
     --chao
-    love.graphics.draw(chao, 800,800, 0, 4,4,chao:getWidth(),chao:getHeight())
+    --love.graphics.draw(chao, 800,800, 0, 4,4,chao:getWidth(),chao:getHeight())
     
     -- Paredes (só pra saber onde estão enquanto não tem sprite)
     for i = 1, #walls do
@@ -177,7 +178,7 @@ function love.draw()
 
     -- Draw player
     local frame = getFrame(player.anims[1])
-    love.graphics.draw(frame, posx, posy, angleToPoint(400, 400, mouseX, mouseY)+math.pi/2, 1, 1, frame:getWidth()/2, frame:getHeight()/2)
+    love.graphics.draw(frame, posx, posy, angleToPoint(600, 400, mouseX, mouseY)+math.pi/2, 1, 1, frame:getWidth()/2, frame:getHeight()/2)
 
     -- Draw tiros
     for i = 1, LIMITE do
@@ -213,6 +214,15 @@ function love.draw()
     -- Crosshair
     love.graphics.line(mouseX - 20, mouseY, mouseX + 20, mouseY)
     love.graphics.line(mouseX, mouseY - 18, mouseX, mouseY + 18)
+
+    -- Desenha UI
+    love.graphics.setFont(font)
+    love.graphics.setColor(black)
+    love.graphics.rectangle("fill",0,0,140,60)
+    love.graphics.setColor(white)
+    love.graphics.print("Wave: " .. currentWave, 10, 10)
+    love.graphics.print("Inimigos: " .. inimigosVivos, 10, 30)
+    --waveSystem.counter()
 end
 
 function love.mousepressed(x, y, button, istouch, presses)
@@ -222,7 +232,7 @@ function love.mousepressed(x, y, button, istouch, presses)
             tiro_atual = 1
         end
 
-        local angle = angleToPoint(400, 400, x, y)
+        local angle = angleToPoint(600, 400, y, y)
         tiros[tiro_atual].x = posx
         tiros[tiro_atual].y = posy
         tiros[tiro_atual].velx = spdTiro * 2 * math.cos(angle)
@@ -236,7 +246,7 @@ function updateTiro(tiro)
         tiro.x = tiro.x + tiro.velx
         tiro.y = tiro.y + tiro.vely
         
-        if tiro.x >= posx+400 or tiro.y >= posy+400 or tiro.x < posx-400 or tiro.y < posy-400 then
+        if tiro.x >= posx+600 or tiro.y >= posy+400 or tiro.x < posx-600 or tiro.y < posy-400 then
             resetTiro(tiro)
         end
     end
