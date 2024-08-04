@@ -5,14 +5,15 @@ local spdEnemy = 2
 local red = {0.7, 0, 0} -- Tiro
 local white = {1,1,1}
 
-local player = {frame = 1, sprites = {}, hitbox = {x = posx, y = posy, r = 20}}
+local player = {frame = 1, anims = {}, hitbox = {x = posx, y = posy, r = 20}}
 
 local inimigos = {}
 local walls = {}
 
 local camera = {x = 400, y = 400}
-
+local chao = {}
 local tiros = {}
+local spdTiro = 6
 local tiro_atual = 1
 LIMITE = 10
 
@@ -27,33 +28,30 @@ function love.load()
     love.graphics.setLineWidth(4)
     love.graphics.setPointSize(5)
     font = love.graphics.newFont("assets/fonts/superstar_memesbruh03.ttf", 24)
-    iniciarWave(currentWave)
 
     -- require "waveSystem"
     require "raycast"
+    require "animation"
+
+    iniciarWave(currentWave)
 
     -- Carrega animação teste do player
-    player.sprites[1] = loadSprites("assets/sprites/player")
-    player.sprites[1].fps = 2
-    player.sprites[1].time = 0 --tempo decorrido, deixa como 0
-
-    -- Cria alguns inimigos na fase
-    for i = 1, 4 do
-        inimigos[i] = createEnemy(150*(i+1%2),200+200*(i%2))
-    --Carrega sprite do inimigo (tá estruturado diferente do player pq eu tava com preguiça pra atualizar o codigo no love.draw)
-        inimigos[i].sprites = loadSprites("assets/sprites/enemy")
-    end
+    player.anims[1] = newAnim("assets/sprites/player", 2)
     
+    chao = love.graphics.newImage("assets/sprites/floor/chao.png")
+
     -- Inicializa o array de tiros
     tiros = {}
     for i = 1, LIMITE do
-        tiros[i] = {x = -20, y = -20, velx = 0, vely = 0}
+        tiros[i] = {x = -1500, y = -1500, velx = 0, vely = 0}
     end
 
     -- Criei umas paredes
-    walls[1] = createLine(100,100,100,600)
-    walls[2] = createLine(500,200,500,800)
-    walls[3] = createLine(100,500,650,500)
+    walls[1] = createLine(0,0,800,0)
+    walls[2] = createLine(800,800,800,0)
+    walls[3] = createLine(0,800,0,0)
+    walls[4] = createLine(800,800,0,800)
+    walls[5] = createLine(400,600,400,200)
 end
 
 -- MARK: Movimentação
@@ -92,11 +90,35 @@ function love.update(dt)
         end
     end
 
-    -- Reduz o tempo de flash dos inimigos
+    -- MARK: Enemy update
+    -- Atualiza os inimigos (flashTime, animação, visão do player)
     for i = 1, #inimigos do
         if inimigos[i].flashTime > 0 then
             inimigos[i].flashTime = inimigos[i].flashTime - dt
         end
+
+        -- Animação dos inimigos
+        if not inimigos[i].morto then
+            updateFrame(inimigos[i].anims[1], dt)
+        end
+
+
+        -- MARK: Visão dos inimigos
+        for _ = 1, #walls do
+            if inimigos[i].morto then
+                break
+            end
+            local ponto = collisionPoint({inimigos[i].x, inimigos[i].y, posx, posy}, walls[_])
+            --se existir um ponto de interseção E o ponto estiver mais próximo doq o player
+            if ponto and dist(inimigos[i].x, inimigos[i].y, ponto[1], ponto[2]) < dist(inimigos[i].x, inimigos[i].y, posx, posy) then
+                inimigos[i].cego = true
+                break
+            else
+                inimigos[i].cego = false
+            end
+        end
+
+
     end
 
     -- # MARK: Verificar se a wave foi completada
@@ -112,6 +134,9 @@ function love.draw()
 
     love.graphics.setColor(white)
 
+    --chao
+    love.graphics.draw(chao, 800-camera.x+400,800-camera.y + 400, 0, 4,4,chao:getWidth(),chao:getHeight())
+
     -- Crosshair
     love.graphics.line(mouseX - 20, mouseY, mouseX + 20, mouseY)
     love.graphics.line(mouseX, mouseY - 18, mouseX, mouseY + 18)
@@ -121,32 +146,15 @@ function love.draw()
         love.graphics.line(ConvertToCamera(walls[i]))
     end
 
-    -- Desenha
+    -- Desenha UI
     love.graphics.setFont(font)
     love.graphics.print("Wave: " .. currentWave, 10, 10)
+    love.graphics.print("Inimigos: " .. inimigosVivos, 10, 30)
     --waveSystem.counter()
 
-    -- MARK: Visão dos inimigos
-    -- (talvez tenha que ir pro love.update mas não sei como passar isso pra la)
-    for i = 1, #inimigos do
-        --love.graphics.line(ConvertToCamera({inimigos[i].x, inimigos[i].y, posx, posy}))
-        for _ = 1, #walls do
-            local ponto = collisionPoint({inimigos[i].x, inimigos[i].y, posx, posy}, walls[_])
-            --se existir um ponto de interseção E o ponto estiver mais próximo doq o player
-            if ponto and dist(inimigos[i].x, inimigos[i].y, ponto[1], ponto[2]) < dist(inimigos[i].x, inimigos[i].y, posx, posy) then
-                love.graphics.setColor(red)
-                love.graphics.points(ponto[1] - camera.x + 400,ponto[2]-camera.y +400)
-                love.graphics.setColor(white)
-                inimigos[i].cego = true
-                break
-            else
-                inimigos[i].cego = false
-            end
-        end
-    end
-
     -- Draw player
-    love.graphics.draw(player.sprites[1][player.frame], posx-camera.x+400, posy-camera.y+400, angleToPoint(posx-camera.x+400, posy-camera.y+400, mouseX, mouseY)+math.pi/2, 1, 1, player.sprites[1][player.frame]:getWidth()/2, player.sprites[1][player.frame]:getHeight()/2)
+    local frame = getFrame(player.anims[1])
+    love.graphics.draw(frame, posx-camera.x+400, posy-camera.y+400, angleToPoint(posx-camera.x+400, posy-camera.y+400, mouseX, mouseY)+math.pi/2, 1, 1, frame:getWidth()/2, frame:getHeight()/2)
 
     -- Draw tiros
     for i = 1, LIMITE do
@@ -164,13 +172,18 @@ function love.draw()
         end
     
         -- MARK: Sprite enemy load
-        if inimigos[i].sprites then
+        frame = getFrame(inimigos[i].anims[1])
+        if inimigos[i].anims[1] then
             -- Desenha o sprite do inimigo
-            love.graphics.draw(inimigos[i].sprites[inimigos[i].frame], inimigos[i].x-camera.x+400, inimigos[i].y-camera.y+400, inimigos[i].angle+math.pi/2, 1, 1, inimigos[i].sprites[inimigos[i].frame]:getWidth() / 2, inimigos[i].sprites[inimigos[i].frame]:getHeight() / 2)
+            love.graphics.draw(frame, inimigos[i].x-camera.x+400, inimigos[i].y-camera.y+400, inimigos[i].angle+math.pi/2, 1, 1, frame:getWidth() / 2, frame:getHeight() / 2)
         else
             -- Exibe uma mensagem de erro se o sprite não for carregado corretamente
             love.graphics.print("Erro ao carregar sprite do inimigo", 10, 10)
         end
+        -- desenha uma linha caso ele te veja
+        --if not inimigos[i].cego and not inimigos[i].morto then
+            --love.graphics.line(ConvertToCamera({inimigos[i].x, inimigos[i].y, posx, posy}))
+        --end
 
     end
 end
@@ -185,8 +198,8 @@ function love.mousepressed(x, y, button, istouch, presses)
         local angle = angleToPoint(posx-camera.x+400, posy-camera.y+400, x, y)
         tiros[tiro_atual].x = posx
         tiros[tiro_atual].y = posy
-        tiros[tiro_atual].velx = spd * 2 * math.cos(angle)
-        tiros[tiro_atual].vely = spd * 2 * math.sin(angle)
+        tiros[tiro_atual].velx = spdTiro * 2 * math.cos(angle)
+        tiros[tiro_atual].vely = spdTiro * 2 * math.sin(angle)
     end
 end
 
@@ -240,16 +253,6 @@ function angleToPoint(x1, y1, x2, y2)
     return math.atan2(y2-y1, x2-x1)
 end
 
--- Retorna todas as imagens de uma pasta em uma table
-function loadSprites(directory)
-    files = love.filesystem.getDirectoryItems(directory)
-    sprites = {}
-    for i = 1, #files do
-        sprites[i] = love.graphics.newImage(directory .. "/" .. files[i])
-    end
-    return sprites
-end
-
 -- MARK: Player update
 function PlayerUpdate(direction, dt)
     local collide_count = {0,0}
@@ -273,15 +276,8 @@ function PlayerUpdate(direction, dt)
         posy = posy + direction[2] * spd
     end
 
-    -- Atualiza qual o frame de animação (depois tenho que meter a statemachine pra ajudar a organizar isso, mas pelo menos ta funcionando se souber oq ta fazendo)
-    player.sprites[1].time = player.sprites[1].time + dt
-    if player.sprites[1].time > 1/player.sprites[1].fps then
-        player.frame = player.frame + 1
-        player.sprites[1].time = player.sprites[1].time - 1/player.sprites[1].fps
-    end
-    if player.frame > #player.sprites[1] then
-        player.frame = 1
-    end
+    -- Atualiza qual o frame de animação
+    updateFrame(player.anims[1], dt)
 end
 
 function dist(x1, y1, x2, y2)
@@ -290,7 +286,7 @@ end
 
 -- MARK: Create new enemy
 function createEnemy(xis,yps)
-    return {x = xis, y = yps, spd = 2, vida = 2, morto = false, cego = false, flashTime = 0, frame = 1}
+    return {x = xis, y = yps, spd = 2, vida = 2, morto = false, cego = false, flashTime = 0, frame = 1, anims = {}}
 end
 
 function ConvertToCamera(points)
@@ -304,7 +300,7 @@ end
 
 -- MARK: Collision
 function collides(circle, line)
-    local rect = {x = line[1]+(line[3]-line[1])/2, y = line[2]+(line[4]-line[2])/2, width = line[3] - line[1], height = line[4] - line [2]}
+    local rect = lineToRect(line)
     local circleDistance = {}
     circleDistance.x = math.abs(circle.x - rect.x)
     circleDistance.y = math.abs(circle.y - rect.y)
@@ -332,10 +328,10 @@ end
 function iniciarWave(wave)
     inimigos = {}
     -- Aumenta 3 inimigos a cada wave 
-    inimigosVivos = inimigosPorWave + 3
+    inimigosVivos = inimigosPorWave + 3 * wave
     for i = 1, inimigosVivos do
-        inimigos[i] = createEnemy(150*(i+1%2),200+200*(i%2))
-        inimigos[i].sprites = loadSprites("assets/sprites/enemy")
+        inimigos[i] = createEnemy(50 + 70*math.floor(i/2),50+700*math.floor(((i-1)/2)%2))
+        inimigos[i].anims[1] = newAnim("assets/sprites/enemy/walk", 5)
     end
 end
 
@@ -349,5 +345,5 @@ function verificarWaveCompleta()
 end
 
 function createEnemy(x,y)
-    return {x = x, y = y, spd = spdEnemy, frame = 1, angle = 0, vida = 3, morto = false, flashTime = 0, cego = false, sprites = {}}
+    return {x = x, y = y, spd = spdEnemy, frame = 1, angle = 0, vida = 3, morto = false, flashTime = 0, cego = false, anims = {}}
 end
