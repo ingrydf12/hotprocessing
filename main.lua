@@ -17,11 +17,6 @@ local spdTiro = 6
 local tiro_atual = 1
 LIMITE = 10
 
--- MARK: Wave variables
-local currentWave = 1
-local inimigosPorWave = 3
-local inimigosVivos = 0
-
 local wallSizeIncreaseWave = 5 -- Wave a partir da qual o tamanho aumenta
 local floorScale = 1 -- Escala padrão do piso
 
@@ -38,7 +33,7 @@ function love.load()
     -- Set volume
     sound:setVolume(masterVolume)
 
-    -- require "waveSystem"
+    require "waveSystem"
     require "raycast"
     require "animation"
 
@@ -46,7 +41,7 @@ function love.load()
 
     -- Carrega animação teste do player
     player.anims[1] = newAnim("assets/sprites/player", 2)
-    
+
     chao = love.graphics.newImage("assets/sprites/floor/chao.png")
 
     -- Inicializa o array de tiros
@@ -84,7 +79,7 @@ end
 
 
 
--- MARK: Movimentação
+-- MARK: Movimentação LOVE UPDATE
 function love.update(dt)
     local dir = {0, 0}
     if love.keyboard.isDown("a") then
@@ -128,8 +123,19 @@ function love.update(dt)
         end
 
         -- Animação dos inimigos
+        if inimigos[i].morto then
+            updateFrame(inimigos[i].anims[2], dt) -- Atualiza animação de morte
+        else
+            updateFrame(inimigos[i].anims[1], dt) -- Atualiza animação normal
+        end
+
+        -- Animação dos inimigos
         if not inimigos[i].morto then
             updateFrame(inimigos[i].anims[1], dt)
+        end
+
+        if inimigos[i].morto then
+            updateFrame(inimigos[i].anims[2], dt)
         end
 
 
@@ -179,10 +185,10 @@ function love.draw()
     end
 
     -- Desenha UI
-    love.graphics.setFont(font)
-    love.graphics.print("Wave: " .. currentWave, 10, 10)
-    love.graphics.print("Inimigos: " .. inimigosVivos, 10, 30)
-    --waveSystem.counter()
+    --love.graphics.setFont(font)
+    --love.graphics.print("Wave: " .. currentWave, 10, 10)
+    --love.graphics.print("Inimigos: " .. inimigosVivos, 10, 30)
+    counter()
 
     -- Draw player
     local frame = getFrame(player.anims[1])
@@ -204,15 +210,20 @@ function love.draw()
         end
     
         -- MARK: Sprite enemy load
-        frame = getFrame(inimigos[i].anims[1])
-        if inimigos[i].anims[1] then
-            -- Desenha o sprite do inimigo
-            love.graphics.draw(frame, inimigos[i].x-camera.x+400, inimigos[i].y-camera.y+400, inimigos[i].angle+math.pi/2, 1, 1, frame:getWidth() / 2, frame:getHeight() / 2)
-        else
-            -- Exibe uma mensagem de erro se o sprite não for carregado corretamente
-            love.graphics.print("Erro ao carregar sprite do inimigo", 10, 10)
+            -- MARK: Sprite enemy load
+    local frame
+    if inimigos[i].morto then
+        frame = getFrame(inimigos[i].anims[2]) -- Usa animação de morte
+    else
+        frame = getFrame(inimigos[i].anims[1]) -- Usa animação normal
+    end
+
+    if frame then
+        love.graphics.draw(frame, inimigos[i].x-camera.x+400, inimigos[i].y-camera.y+400, inimigos[i].angle+math.pi/2, 1, 1, frame:getWidth() / 2, frame:getHeight() / 2)
+    else
+        love.graphics.print("Erro ao carregar sprite do inimigo", 10, 10)
         end
-        -- desenha uma linha caso ele te veja
+    -- desenha uma linha caso ele te veja
         --if not inimigos[i].cego and not inimigos[i].morto then
             --love.graphics.line(ConvertToCamera({inimigos[i].x, inimigos[i].y, posx, posy}))
         --end
@@ -364,7 +375,8 @@ function iniciarWave(wave)
     inimigosVivos = inimigosPorWave + 3 * wave
     for i = 1, inimigosVivos do
         inimigos[i] = createEnemy(50 + 70*math.floor(i/2),50+700*math.floor(((i-1)/2)%2))
-        inimigos[i].anims[1] = newAnim("assets/sprites/enemy/walk", 5)
+        inimigos[i].anims[1] = newAnim("assets/sprites/enemy/walk", 5) -- Animação de andar
+        inimigos[i].anims[2] = newAnim("assets/sprites/enemy/enemy-death", 5) -- Animação de morte
         -- inimigos[i].anims[2] = newAnim ("assets/sprites/enemy/death", 5)
     end
     -- Aumenta o tamanho das paredes a partir da wave 5
