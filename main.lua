@@ -20,17 +20,18 @@ LIMITE = 10
 local wallSizeIncreaseWave = 5 -- Wave a partir da qual o tamanho aumenta
 local floorScale = 1 -- Escala padrão do piso
 
--- MARK: Function Load LOVE
+-- MARK: Load Love
 function love.load()
+    -- UI/UX
+    love.window.setTitle("Hotline ISMD") -- Seta o titulo da janela
     love.window.setMode(1200, 800)
     love.graphics.setLineWidth(4)
     love.graphics.setPointSize(5)
-    -- UX
     font = love.graphics.newFont("assets/fonts/superstar_memesbruh03.ttf", 24)
     sound = love.audio.newSource("assets/sfx/tele_001.wav", "stream")
     masterVolume = 0.2
 
-    -- Set volume
+    -- set volume
     sound:setVolume(masterVolume)
 
     require "waveSystem"
@@ -182,10 +183,7 @@ function love.draw()
         love.graphics.line(walls[i])
     end
 
-    -- Desenha UI
-    --love.graphics.setFont(font)
-    --love.graphics.print("Wave: " .. currentWave, 10, 10)
-    --love.graphics.print("Inimigos: " .. inimigosVivos, 10, 30)
+
     counter()
 
     -- Draw player
@@ -228,6 +226,27 @@ function love.draw()
     
     end
     love.graphics.pop()
+
+    -- Desenha UI mostrando os controles usados pelo player
+    local teclaW = love.graphics.newImage("assets/sprites/teclas/teclaw.png")
+    local teclaA = love.graphics.newImage("assets/sprites/teclas/teclaa.png")
+    local teclaS = love.graphics.newImage("assets/sprites/teclas/teclas.png")
+    local teclaD = love.graphics.newImage("assets/sprites/teclas/teclad.png")
+
+    if love.keyboard.isDown("w") then
+        love.graphics.draw(teclaW, 1100, 40,0,2,2)
+    end
+    if love.keyboard.isDown("a") then
+        love.graphics.draw(teclaA, 1100, 70,0,2,2)
+    end
+    if love.keyboard.isDown("s") then
+        love.graphics.draw(teclaS, 1100, 100,0,2,2)
+    end
+    if love.keyboard.isDown("d") then
+        love.graphics.draw(teclaD, 1100, 130,0,2,2)
+    end
+
+    
     -- Crosshair
     love.graphics.line(mouseX - 20, mouseY, mouseX + 20, mouseY)
     love.graphics.line(mouseX, mouseY - 18, mouseX, mouseY + 18)
