@@ -3,7 +3,7 @@
 
 <h2> Equipe </h2>
 
-| [<img src="https://avatars.githubusercontent.com/u/90623907?v=4" width=100><br><sub>Ingryd Cordeiro Duarte</sub>](https://linktr.ee/ingryddev) |  [<img src="https://avatars.githubusercontent.com/u/177125848?v=4" width=100><br><sub>Renan Araujo</sub>](https://github.com/Soiten)
+| [<img src="https://avatars.githubusercontent.com/u/90623907?v=4" width=100><br><sub>Ingryd Cordeiro Duarte</sub>](https://linktr.ee/ingryddev) |  [<img src="https://avatars.githubusercontent.com/u/177125848?v=4" width=100><br><sub>Renan Araujo Polainas</sub>](https://github.com/Soiten)
 | :---: | :---: |
 
 <h2> LOVE2D </h2>

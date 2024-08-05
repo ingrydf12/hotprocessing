@@ -182,12 +182,6 @@ function love.draw()
         love.graphics.line(walls[i])
     end
 
-    -- Desenha UI
-    --love.graphics.setFont(font)
-    --love.graphics.print("Wave: " .. currentWave, 10, 10)
-    --love.graphics.print("Inimigos: " .. inimigosVivos, 10, 30)
-    counter()
-
     -- Draw player
     local frame = getFrame(player.anims[1])
     love.graphics.draw(frame, posx, posy, angleToPoint(600, 400, mouseX, mouseY)+math.pi/2, 1, 1, frame:getWidth()/2, frame:getHeight()/2)
@@ -221,16 +215,16 @@ function love.draw()
     else
         love.graphics.print("Erro ao carregar sprite do inimigo", 10, 10)
         end
-    -- desenha uma linha caso ele te veja
-        --if not inimigos[i].cego and not inimigos[i].morto then
-            --love.graphics.line(inimigos[i].x, inimigos[i].y, posx, posy))
-        --end
-    
     end
     love.graphics.pop()
+
     -- Crosshair
     love.graphics.line(mouseX - 20, mouseY, mouseX + 20, mouseY)
     love.graphics.line(mouseX, mouseY - 18, mouseX, mouseY + 18)
+    
+    -- Draw UI
+    love.graphics.setColor(white)
+    counter()
 end
 
 function love.mousepressed(x, y, button, istouch, presses)
@@ -369,7 +363,7 @@ function iniciarWave(wave)
     for i = 1, inimigosVivos do
         inimigos[i] = createEnemy(50 + 70*math.floor(i/2),50+700*math.floor(((i-1)/2)%2))
         inimigos[i].anims[1] = newAnim("assets/sprites/enemy/walk", 5) -- Animação de andar
-        inimigos[i].anims[2] = newAnim("assets/sprites/enemy/enemy-death", 1) -- Animação de morte
+        inimigos[i].anims[2] = newAnim("assets/sprites/enemy/enemy-death", 1, false) -- Animação de morte
         -- inimigos[i].anims[2] = newAnim ("assets/sprites/enemy/death", 5)
     end
     -- Aumenta o tamanho das paredes a partir da wave 5
@@ -404,3 +398,12 @@ function clamp(a, min, max)
     end
     return a
 end
+--[[
+local levelSize = 1200
+local room1 = {walls = {createLine(0,0,levelSize,0), createLine(0,0,0,levelSize), createLine(levelSize, levelSize, levelSize, 0), createLine(levelSize, levelSize, 0, levelSize)},}
+
+function newRoom(wave)
+    iniciarWave(wave)
+end
+
+function updateWaveSpawn()]]
