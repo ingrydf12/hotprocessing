@@ -56,6 +56,7 @@ end
 -- MARK: Create Walls Function
 function createWalls()
     walls = {}
+    --[[
     local currentScale = 1  -- Escala padrão
 
     -- Verifica se a wave atual está acima do limite de aumento de tamanho das paredes
@@ -66,15 +67,15 @@ function createWalls()
 
     -- Ajusta o tamanho das paredes com base na escala atual
     local scaledWallSize = wallSize * currentScale
-
+    ]]
     -- Cria as paredes com base na escala atual
-    walls[1] = createLine(0, 0, scaledWallSize, 0)
-    walls[2] = createLine(scaledWallSize, 0, scaledWallSize, scaledWallSize)
-    walls[3] = createLine(scaledWallSize, scaledWallSize, 0, scaledWallSize)
-    walls[4] = createLine(0, scaledWallSize, 0, 0)
+    walls[1] = createLine(0, 0, wallSize, 0)
+    walls[2] = createLine(wallSize, 0, wallSize, wallSize)
+    walls[3] = createLine(wallSize, wallSize, 0, wallSize)
+    walls[4] = createLine(0, wallSize, 0, 0)
 
     -- Adiciona uma parede central se necessário
-    walls[5] = createLine(scaledWallSize / 2, scaledWallSize * 3 / 4, scaledWallSize / 2, scaledWallSize / 4)
+    walls[5] = createLine(wallSize / 2, wallSize * 3 / 4, wallSize / 2, wallSize / 4)
 
 end
 
@@ -95,6 +96,11 @@ function love.update(dt)
     if love.keyboard.isDown("s") then
         dir[2] = dir[2] + 1
     end
+
+    --[[
+    if love.keyboard.isDown("k") then
+        inimigosVivos = 0
+    end]]
 
     PlayerUpdate(dir, dt)
     --camera = {x = clamp(posx, wallSize/2-50, wallSize/2+50), y = clamp(posy, wallSize/2-50, wallSize/2+50)}
@@ -182,9 +188,6 @@ function love.draw()
     for i = 1, #walls do
         love.graphics.line(walls[i])
     end
-
-
-    counter()
 
     -- Draw player
     local frame = getFrame(player.anims[1])
@@ -392,9 +395,9 @@ function iniciarWave(wave)
     end
     -- Aumenta o tamanho das paredes a partir da wave 5
     if currentWave >= wallSizeIncreaseWave then
-        wallSize = 1200
+        wallSize = 1200 * 1.2
     else
-        wallSize = 800
+        wallSize = 800 * 1.2
     end
 
     createWalls()
@@ -422,12 +425,34 @@ function clamp(a, min, max)
     end
     return a
 end
---[[
-local levelSize = 1200
-local room1 = {walls = {createLine(0,0,levelSize,0), createLine(0,0,0,levelSize), createLine(levelSize, levelSize, levelSize, 0), createLine(levelSize, levelSize, 0, levelSize)},}
 
-function newRoom(wave)
-    iniciarWave(wave)
+function chooseLayout(i)
+    local layout = {walls = {createLine(0, 0, wallSize, 0), 
+    createLine(wallSize, 0, wallSize, wallSize),
+    createLine(wallSize, wallSize, 0, wallSize),
+    createLine(0, wallSize, 0, 0)},
+    points = {}}
+
+    if i == 1 then
+        layout.walls[5] = createLine()
+        layout.walls[6] = createLine()
+        layout.walls[7] = createLine()
+        layout.walls[8] = createLine()
+    end
+
+    if i == 2 then
+        layout.walls[5] = createLine()
+        layout.walls[6] = createLine()
+        layout.walls[7] = createLine()
+        layout.walls[8] = createLine()
+    end
+
+    if i == 3 then
+        layout.walls[5] = createLine()
+        layout.walls[6] = createLine()
+        layout.walls[7] = createLine()
+        layout.walls[8] = createLine()
+    end
+    
+    return layout
 end
-
-function updateWaveSpawn()]]
