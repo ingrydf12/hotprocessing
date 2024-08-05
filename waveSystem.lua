@@ -1,4 +1,5 @@
 -- MARK: Variables
+local waveSystem = {}
 currentWave = 1
 inimigosPorWave = 4
 inimigosVivos = 0
@@ -25,7 +26,7 @@ function atualizar(dt)
     end
 end ]]
 
-function counter()
+function waveSystem.counter()
     love.graphics.setFont(font)
     love.graphics.print("Wave: " .. currentWave, 10, 10)
     love.graphics.print("Inimigos restantes: " .. inimigosVivos, 10, 30)
@@ -44,3 +45,4 @@ function verificarAcerto(inimigo, tiro)
     end
 end
  ]]
+ return waveSystem

@@ -426,6 +426,7 @@ function clamp(a, min, max)
     return a
 end
 
+--
 function chooseLayout(i)
     local layout = {walls = {createLine(0, 0, wallSize, 0), 
     createLine(wallSize, 0, wallSize, wallSize),
