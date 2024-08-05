@@ -1,5 +1,8 @@
-function newAnim(directory, fps)
-    local anim = {time = 0, frame_atual = 1}
+function newAnim(directory, fps, loop)
+    if type(loop) == "nil" then
+        loop = true
+    end
+    local anim = {time = 0, frame_atual = 1, doesLoop = loop}
     anim.fps = fps
     local files = love.filesystem.getDirectoryItems(directory)
     anim.frames = {}
@@ -10,6 +13,9 @@ function newAnim(directory, fps)
 end
 
 function updateFrame(anim, dt)
+    if anim.frame_atual == #anim.frames and not anim.doesLoop then
+        return
+    end
     anim.time = anim.time + dt
     if anim.time > 1/anim.fps then
         anim.time = anim.time - 1/anim.fps

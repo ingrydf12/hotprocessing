@@ -56,6 +56,7 @@ end
 -- MARK: Create Walls Function
 function createWalls()
     walls = {}
+    --[[
     local currentScale = 1  -- Escala padrão
 
     -- Verifica se a wave atual está acima do limite de aumento de tamanho das paredes
@@ -66,15 +67,15 @@ function createWalls()
 
     -- Ajusta o tamanho das paredes com base na escala atual
     local scaledWallSize = wallSize * currentScale
-
+    ]]
     -- Cria as paredes com base na escala atual
-    walls[1] = createLine(0, 0, scaledWallSize, 0)
-    walls[2] = createLine(scaledWallSize, 0, scaledWallSize, scaledWallSize)
-    walls[3] = createLine(scaledWallSize, scaledWallSize, 0, scaledWallSize)
-    walls[4] = createLine(0, scaledWallSize, 0, 0)
+    walls[1] = createLine(0, 0, wallSize, 0)
+    walls[2] = createLine(wallSize, 0, wallSize, wallSize)
+    walls[3] = createLine(wallSize, wallSize, 0, wallSize)
+    walls[4] = createLine(0, wallSize, 0, 0)
 
     -- Adiciona uma parede central se necessário
-    walls[5] = createLine(scaledWallSize / 2, scaledWallSize * 3 / 4, scaledWallSize / 2, scaledWallSize / 4)
+    walls[5] = createLine(wallSize / 2, wallSize * 3 / 4, wallSize / 2, wallSize / 4)
 
 end
 
@@ -95,6 +96,11 @@ function love.update(dt)
     if love.keyboard.isDown("s") then
         dir[2] = dir[2] + 1
     end
+
+    --[[
+    if love.keyboard.isDown("k") then
+        inimigosVivos = 0
+    end]]
 
     PlayerUpdate(dir, dt)
     --camera = {x = clamp(posx, wallSize/2-50, wallSize/2+50), y = clamp(posy, wallSize/2-50, wallSize/2+50)}
@@ -183,9 +189,6 @@ function love.draw()
         love.graphics.line(walls[i])
     end
 
-
-    counter()
-
     -- Draw player
     local frame = getFrame(player.anims[1])
     love.graphics.draw(frame, posx, posy, angleToPoint(600, 400, mouseX, mouseY)+math.pi/2, 1, 1, frame:getWidth()/2, frame:getHeight()/2)
@@ -219,11 +222,6 @@ function love.draw()
     else
         love.graphics.print("Erro ao carregar sprite do inimigo", 10, 10)
         end
-    -- desenha uma linha caso ele te veja
-        --if not inimigos[i].cego and not inimigos[i].morto then
-            --love.graphics.line(inimigos[i].x, inimigos[i].y, posx, posy))
-        --end
-    
     end
     love.graphics.pop()
 
@@ -250,6 +248,10 @@ function love.draw()
     -- Crosshair
     love.graphics.line(mouseX - 20, mouseY, mouseX + 20, mouseY)
     love.graphics.line(mouseX, mouseY - 18, mouseX, mouseY + 18)
+    
+    -- Draw UI
+    love.graphics.setColor(white)
+    counter()
 end
 
 function love.mousepressed(x, y, button, istouch, presses)
@@ -388,14 +390,14 @@ function iniciarWave(wave)
     for i = 1, inimigosVivos do
         inimigos[i] = createEnemy(50 + 70*math.floor(i/2),50+700*math.floor(((i-1)/2)%2))
         inimigos[i].anims[1] = newAnim("assets/sprites/enemy/walk", 5) -- Animação de andar
-        inimigos[i].anims[2] = newAnim("assets/sprites/enemy/enemy-death", 1) -- Animação de morte
+        inimigos[i].anims[2] = newAnim("assets/sprites/enemy/enemy-death", 1, false) -- Animação de morte
         -- inimigos[i].anims[2] = newAnim ("assets/sprites/enemy/death", 5)
     end
     -- Aumenta o tamanho das paredes a partir da wave 5
     if currentWave >= wallSizeIncreaseWave then
-        wallSize = 1200
+        wallSize = 1200 * 1.2
     else
-        wallSize = 800
+        wallSize = 800 * 1.2
     end
 
     createWalls()
@@ -422,4 +424,35 @@ function clamp(a, min, max)
         return max
     end
     return a
+end
+
+function chooseLayout(i)
+    local layout = {walls = {createLine(0, 0, wallSize, 0), 
+    createLine(wallSize, 0, wallSize, wallSize),
+    createLine(wallSize, wallSize, 0, wallSize),
+    createLine(0, wallSize, 0, 0)},
+    points = {}}
+
+    if i == 1 then
+        layout.walls[5] = createLine()
+        layout.walls[6] = createLine()
+        layout.walls[7] = createLine()
+        layout.walls[8] = createLine()
+    end
+
+    if i == 2 then
+        layout.walls[5] = createLine()
+        layout.walls[6] = createLine()
+        layout.walls[7] = createLine()
+        layout.walls[8] = createLine()
+    end
+
+    if i == 3 then
+        layout.walls[5] = createLine()
+        layout.walls[6] = createLine()
+        layout.walls[7] = createLine()
+        layout.walls[8] = createLine()
+    end
+    
+    return layout
 end
