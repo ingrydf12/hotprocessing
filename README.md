@@ -3,9 +3,8 @@
 
 <h2> Equipe </h2>
 
-| ------------- | ------------- |
-| <img src="https://avatars.githubusercontent.com/u/90623907?v=4">  | <a href="https://github.com/ingrydf12"> Ingryd Duarte</a> |
-| <img src="https://avatars.githubusercontent.com/u/177125848?v=4">  | <a href="https://github.com/Soiten">Renan Araujo</a>  |
+| <img src="https://avatars.githubusercontent.com/u/90623907?v=4" width=40 height=40>  | <a href="https://github.com/ingrydf12"> Ingryd Duarte</a> |
+| <img src="https://avatars.githubusercontent.com/u/177125848?v=4" width=40 height=40>  | <a href="https://github.com/Soiten">Renan Araujo</a>  |
 
 <h2> LOVE2D </h2>
 O Love2D é um framework multiplataforma que tem <b> Lua </b> como linguagem de script para desenvolvimento de jogos. Ele possui diversas ferramentas que auxiliam a criação de jogos que envolvam física, gráficos, sons, interação multimídia, manipulação de arquivos, consumo de outros frameworks e outros.
