@@ -43,7 +43,7 @@ function love.load()
     iniciarWave(currentWave)
 
     -- Carrega animação teste do player
-    player.anims[1] = newAnim("assets/sprites/player", 2)
+    player.anims[1] = newAnim("assets/sprites/player", 5)
 
     chao = love.graphics.newImage("assets/sprites/floor/chao.png")
 
@@ -135,9 +135,9 @@ function love.update(dt)
         end
 
         -- Colisão com o player 
-        if player.iTime <= 0 and dist(inimigos[i].x,inimigos[i].y, posx, posy) < 10 then
+        if player.iTime <= 0 and not inimigos[i].morto and dist(inimigos[i].x,inimigos[i].y, posx, posy) < 10 then
             player.vida = player.vida - 1
-            player.iTime = 0.5
+            player.iTime = 0.65 -- 650ms
         end
 
 
@@ -166,17 +166,13 @@ function love.draw()
         love.graphics.line(walls[i])
     end
 
-    -- Draw player
-    local frame = getFrame(player.anims[1])
-    love.graphics.draw(frame, posx, posy, angleToPoint(600, 400, mouseX, mouseY)+math.pi/2, 1, 1, frame:getWidth()/2, frame:getHeight()/2)
-
     -- Draw tiros
     for i = 1, LIMITE do
         local tiro = tiros[i]
         love.graphics.setColor(red)
         love.graphics.rectangle("fill", tiro.x, tiro.y, 10, 20)
     end
-
+    
     -- MARK: - "Knockback" effect on enemys
     for i = 1, #inimigos do
         if inimigos[i].flashTime > 0 then
@@ -184,27 +180,31 @@ function love.draw()
         else
             love.graphics.setColor(1, 1, 1) -- Branco (cor padrão)
         end
-    
+        
         -- MARK: Sprite enemy load
-            -- MARK: Sprite enemy load
-    local frame
-    if inimigos[i].morto then
-        frame = getFrame(inimigos[i].anims[2]) -- Usa animação de morte
-    else
-        frame = getFrame(inimigos[i].anims[1]) -- Usa animação normal
-    end
-
-    if frame then
-        love.graphics.draw(frame, inimigos[i].x, inimigos[i].y, inimigos[i].angle+math.pi/2, 1, 1, frame:getWidth() / 2, frame:getHeight() / 2)
-    else
-        love.graphics.print("Erro ao carregar sprite do inimigo", 10, 10)
+        local frame
+        if inimigos[i].morto then
+            frame = getFrame(inimigos[i].anims[2]) -- Usa animação de morte
+        else
+            frame = getFrame(inimigos[i].anims[1]) -- Usa animação normal
         end
-    end
+        
+        if frame then
+            love.graphics.draw(frame, inimigos[i].x, inimigos[i].y, inimigos[i].angle+math.pi/2, 1, 1, frame:getWidth() / 2, frame:getHeight() / 2)
+        else
+            love.graphics.print("Erro ao carregar sprite do inimigo", 10, 10)
+            end
+        end
+    
+    -- Draw player
+    love.graphics.setColor(white)
+    local frame = getFrame(player.anims[1])
+    love.graphics.draw(frame, posx, posy, angleToPoint(600, 400, mouseX, mouseY)+math.pi/2, 1, 1, frame:getWidth()/2, frame:getHeight()/2)
     love.graphics.pop()
 
     -- MARK: Draw UI
-    love.graphics.setColor(white)
     -- Desenha UI mostrando os controles usados pelo player
+    -- nao recomendo usar função que carrega arquivo no draw(), de preferencia carrega logo no global e só usa o draw pra desenhar
     local teclaW = love.graphics.newImage("assets/sprites/teclas/teclaw.png")
     local teclaA = love.graphics.newImage("assets/sprites/teclas/teclaa.png")
     local teclaS = love.graphics.newImage("assets/sprites/teclas/teclas.png")
@@ -229,7 +229,7 @@ function love.draw()
     
     -- Info
     counter()
-    love.graphics.print(player.vida .. " HP", 600, 700)
+    love.graphics.print(player.vida .. " HP", 580, 450)
 end
 
 function love.mousepressed(x, y, button, istouch, presses)
@@ -322,7 +322,9 @@ function PlayerUpdate(direction, dt)
     end
 
     -- Atualiza qual o frame de animação
-    updateFrame(player.anims[1], dt)
+    if direction[1] ~= 0 or direction[2] ~=0 then
+        updateFrame(player.anims[1], dt)
+    end
 
     -- Tempo de imunidade
     player.iTime = player.iTime - dt
@@ -377,7 +379,7 @@ function iniciarWave(wave)
     end
     -- Aumenta o tamanho das paredes a partir da wave 5
     if currentWave >= wallSizeIncreaseWave then
-        wallSize = 1200 * 1.2
+        wallSize = 1200
         floorScale = 1.5
     else
         wallSize = 800 * 1.2
