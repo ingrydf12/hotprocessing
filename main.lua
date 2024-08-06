@@ -6,12 +6,11 @@ local red = {0.7, 0, 0} -- Tiro
 local white = {1,1,1}
 local black = {0,0,0}
 
-local player = {frame = 1, anims = {}, hitbox = {x = posx, y = posy, r = 20}}
+local player = {frame = 1, anims = {}, hitbox = {x = posx, y = posy, r = 20}, vida = 5, iTime = 0}
 --local camera = {x = posx, y = posy}
 local inimigos = {}
 local walls = {}
 
-local chao = {}
 local tiros = {}
 local spdTiro = 6
 local tiro_atual = 1
@@ -20,7 +19,10 @@ LIMITE = 10
 local wallSizeIncreaseWave = 5 -- Wave a partir da qual o tamanho aumenta
 local floorScale = 1 -- Escala padrão do piso
 
--- MARK: Load Love
+local spawnTime = 1.5 --intervalo entre spawn de inimigos (em segundos)
+local groupSize = 3 --quantidade de inimigos por spawn
+local waveTime = 0 --tempo na wave, atualizado automaticamente
+-- MARK: LOVE LOAD
 function love.load()
     -- UI/UX
     love.window.setTitle("Hotline ISMD") -- Seta o titulo da janela
@@ -41,7 +43,7 @@ function love.load()
     iniciarWave(currentWave)
 
     -- Carrega animação teste do player
-    player.anims[1] = newAnim("assets/sprites/player", 2)
+    player.anims[1] = newAnim("assets/sprites/player", 5)
 
     chao = love.graphics.newImage("assets/sprites/floor/chao.png")
 
@@ -53,35 +55,7 @@ function love.load()
 
 end
 
--- MARK: Create Walls Function
-function createWalls()
-    walls = {}
-    --[[
-    local currentScale = 1  -- Escala padrão
-
-    -- Verifica se a wave atual está acima do limite de aumento de tamanho das paredes
-    if currentWave > wallSizeIncreaseWave then
-        -- Aumenta o tamanho das paredes a partir da wave 5
-        currentScale = 1 * 1.2
-    end
-
-    -- Ajusta o tamanho das paredes com base na escala atual
-    local scaledWallSize = wallSize * currentScale
-    ]]
-    -- Cria as paredes com base na escala atual
-    walls[1] = createLine(0, 0, wallSize, 0)
-    walls[2] = createLine(wallSize, 0, wallSize, wallSize)
-    walls[3] = createLine(wallSize, wallSize, 0, wallSize)
-    walls[4] = createLine(0, wallSize, 0, 0)
-
-    -- Adiciona uma parede central se necessário
-    walls[5] = createLine(wallSize / 2, wallSize * 3 / 4, wallSize / 2, wallSize / 4)
-
-end
-
-
-
--- MARK: Movimentação LOVE UPDATE
+-- MARK: LOVE UPDATE
 function love.update(dt)
     local dir = {0, 0}
     if love.keyboard.isDown("a") then
@@ -97,10 +71,10 @@ function love.update(dt)
         dir[2] = dir[2] + 1
     end
 
-    --[[
+    
     if love.keyboard.isDown("k") then
         inimigosVivos = 0
-    end]]
+    end
 
     PlayerUpdate(dir, dt)
     --camera = {x = clamp(posx, wallSize/2-50, wallSize/2+50), y = clamp(posy, wallSize/2-50, wallSize/2+50)}
@@ -144,7 +118,6 @@ function love.update(dt)
             updateFrame(inimigos[i].anims[2], dt)
         end
 
-
         -- MARK: Visão dos inimigos
         for _ = 1, #walls do
             if inimigos[i].morto then
@@ -161,15 +134,22 @@ function love.update(dt)
             end
         end
 
+        -- Colisão com o player 
+        if player.iTime <= 0 and not inimigos[i].morto and dist(inimigos[i].x,inimigos[i].y, posx, posy) < 10 then
+            player.vida = player.vida - 1
+            player.iTime = 0.65 -- 650ms
+        end
+
 
     end
 
     -- # MARK: Verificar se a wave foi completada
+    spawnEnemies(dt)
     verificarWaveCompleta()
 
 end
 
--- MARK: - DRAW
+-- MARK: LOVE DRAW
 function love.draw()
     love.graphics.clear(0, 0, 0, 1)
     
@@ -180,18 +160,11 @@ function love.draw()
     love.graphics.translate(-posx+600, -posy+400)
 
     love.graphics.setColor(white)
-
-    --chao
-    --love.graphics.draw(chao, 800,800, 0, 4,4,chao:getWidth(),chao:getHeight())
     
     -- Paredes (só pra saber onde estão enquanto não tem sprite)
     for i = 1, #walls do
         love.graphics.line(walls[i])
     end
-
-    -- Draw player
-    local frame = getFrame(player.anims[1])
-    love.graphics.draw(frame, posx, posy, angleToPoint(600, 400, mouseX, mouseY)+math.pi/2, 1, 1, frame:getWidth()/2, frame:getHeight()/2)
 
     -- Draw tiros
     for i = 1, LIMITE do
@@ -199,7 +172,7 @@ function love.draw()
         love.graphics.setColor(red)
         love.graphics.rectangle("fill", tiro.x, tiro.y, 10, 20)
     end
-
+    
     -- MARK: - "Knockback" effect on enemys
     for i = 1, #inimigos do
         if inimigos[i].flashTime > 0 then
@@ -207,25 +180,31 @@ function love.draw()
         else
             love.graphics.setColor(1, 1, 1) -- Branco (cor padrão)
         end
-    
+        
         -- MARK: Sprite enemy load
-            -- MARK: Sprite enemy load
-    local frame
-    if inimigos[i].morto then
-        frame = getFrame(inimigos[i].anims[2]) -- Usa animação de morte
-    else
-        frame = getFrame(inimigos[i].anims[1]) -- Usa animação normal
-    end
-
-    if frame then
-        love.graphics.draw(frame, inimigos[i].x, inimigos[i].y, inimigos[i].angle+math.pi/2, 1, 1, frame:getWidth() / 2, frame:getHeight() / 2)
-    else
-        love.graphics.print("Erro ao carregar sprite do inimigo", 10, 10)
+        local frame
+        if inimigos[i].morto then
+            frame = getFrame(inimigos[i].anims[2]) -- Usa animação de morte
+        else
+            frame = getFrame(inimigos[i].anims[1]) -- Usa animação normal
         end
-    end
+        
+        if frame then
+            love.graphics.draw(frame, inimigos[i].x, inimigos[i].y, inimigos[i].angle+math.pi/2, 1, 1, frame:getWidth() / 2, frame:getHeight() / 2)
+        else
+            love.graphics.print("Erro ao carregar sprite do inimigo", 10, 10)
+            end
+        end
+    
+    -- Draw player
+    love.graphics.setColor(white)
+    local frame = getFrame(player.anims[1])
+    love.graphics.draw(frame, posx, posy, angleToPoint(600, 400, mouseX, mouseY)+math.pi/2, 1, 1, frame:getWidth()/2, frame:getHeight()/2)
     love.graphics.pop()
 
+    -- MARK: Draw UI
     -- Desenha UI mostrando os controles usados pelo player
+    -- nao recomendo usar função que carrega arquivo no draw(), de preferencia carrega logo no global e só usa o draw pra desenhar
     local teclaW = love.graphics.newImage("assets/sprites/teclas/teclaw.png")
     local teclaA = love.graphics.newImage("assets/sprites/teclas/teclaa.png")
     local teclaS = love.graphics.newImage("assets/sprites/teclas/teclas.png")
@@ -244,14 +223,13 @@ function love.draw()
         love.graphics.draw(teclaD, 1100, 130,0,2,2)
     end
 
-    
     -- Crosshair
     love.graphics.line(mouseX - 20, mouseY, mouseX + 20, mouseY)
     love.graphics.line(mouseX, mouseY - 18, mouseX, mouseY + 18)
     
-    -- Draw UI
-    love.graphics.setColor(white)
+    -- Info
     counter()
+    love.graphics.print(player.vida .. " HP", 580, 450)
 end
 
 function love.mousepressed(x, y, button, istouch, presses)
@@ -300,7 +278,7 @@ end
 -- MARK: Check hit on Enemy
 function verificarAcerto(tiro, i)
     if tiro then
-        local distancia = math.sqrt((tiro.x - inimigos[i].x)^2 + (tiro.y - inimigos[i].y)^2)
+        local distancia = dist(tiro.x, tiro.y, inimigos[i].x, inimigos[i].y)
         if distancia < 20 then
             inimigos[i].vida = inimigos[i].vida - 1
             inimigos[i].flashTime = 0.4 -- 400 ms de piscar
@@ -344,7 +322,12 @@ function PlayerUpdate(direction, dt)
     end
 
     -- Atualiza qual o frame de animação
-    updateFrame(player.anims[1], dt)
+    if direction[1] ~= 0 or direction[2] ~=0 then
+        updateFrame(player.anims[1], dt)
+    end
+
+    -- Tempo de imunidade
+    player.iTime = player.iTime - dt
 end
 
 function dist(x1, y1, x2, y2)
@@ -388,19 +371,24 @@ function iniciarWave(wave)
     -- Aumenta 3 inimigos a cada wave 
     inimigosVivos = inimigosPorWave + 3 * wave
     for i = 1, inimigosVivos do
-        inimigos[i] = createEnemy(50 + 70*math.floor(i/2),50+700*math.floor(((i-1)/2)%2))
-        inimigos[i].anims[1] = newAnim("assets/sprites/enemy/walk", 5) -- Animação de andar
-        inimigos[i].anims[2] = newAnim("assets/sprites/enemy/enemy-death", 1, false) -- Animação de morte
+        local var = math.random(2)
+        inimigos[i] = createEnemy(3000,0)
+        inimigos[i].anims[1] = newAnim("assets/sprites/enemy" .. var .. "/walk", 5) -- Animação de andar
+        inimigos[i].anims[2] = newAnim("assets/sprites/enemy".. var .."/enemy-death", 1, false) -- Animação de morte
         -- inimigos[i].anims[2] = newAnim ("assets/sprites/enemy/death", 5)
     end
     -- Aumenta o tamanho das paredes a partir da wave 5
     if currentWave >= wallSizeIncreaseWave then
-        wallSize = 1200 * 1.2
+        wallSize = 1200
+        floorScale = 1.5
     else
         wallSize = 800 * 1.2
     end
 
-    createWalls()
+    layout = chooseLayout(math.random(3))
+    walls = layout.walls
+    spawnPoints = layout.points
+    spawnedCount = 0
 end
 
 -- Função para verificar se a wave foi completada
@@ -409,6 +397,7 @@ function verificarWaveCompleta()
         currentWave = currentWave + 1
         spdEnemy = spdEnemy + 0.5 -- Aumenta a velocidade a cada wave
         iniciarWave(currentWave)
+        waveTime = 0
     end
 end
 
@@ -425,7 +414,7 @@ function clamp(a, min, max)
     end
     return a
 end
-
+-- MARK: Room configs
 function chooseLayout(i)
     local layout = {walls = {createLine(0, 0, wallSize, 0), 
     createLine(wallSize, 0, wallSize, wallSize),
@@ -434,25 +423,46 @@ function chooseLayout(i)
     points = {}}
 
     if i == 1 then
-        layout.walls[5] = createLine()
-        layout.walls[6] = createLine()
-        layout.walls[7] = createLine()
-        layout.walls[8] = createLine()
-    end
+        layout.walls[5] = createLine(1/6*wallSize,1/6*wallSize, 0.4*wallSize, 1/6*wallSize)
+        layout.walls[6] = createLine(1/6*wallSize, 1/6*wallSize, 1/6*wallSize, 0.4*wallSize)
+        layout.walls[7] = createLine(5/6*wallSize,1/6*wallSize, 0.6*wallSize, 1/6*wallSize)
+        layout.walls[8] = createLine(5/6*wallSize, 1/6*wallSize, 5/6*wallSize, 0.4*wallSize)
+        layout.walls[9] = createLine(5/6*wallSize, 5/6*wallSize, 5/6*wallSize, 0.6*wallSize)
+        layout.walls[10] = createLine(5/6*wallSize, 5/6*wallSize, 0.6*wallSize, 5/6*wallSize)
+        layout.walls[11] = createLine(1/6*wallSize, 5/6*wallSize, 1/6*wallSize, 0.6*wallSize)
+        layout.walls[12] = createLine(1/6*wallSize, 5/6*wallSize, 0.4*wallSize, 5/6*wallSize)
+        layout.points = {{wallSize*0.5, wallSize*0.1}, {wallSize*0.5, wallSize*0.9}, {wallSize*0.1,wallSize*0.5}, {wallSize*0.9,wallSize*0.5},
+        {0.1*wallSize, 0.1*wallSize}, {0.9*wallSize,0.9*wallSize}, {0.1*wallSize, 0.9*wallSize},{0.9*wallSize, 0.1*wallSize}}
 
-    if i == 2 then
-        layout.walls[5] = createLine()
-        layout.walls[6] = createLine()
-        layout.walls[7] = createLine()
-        layout.walls[8] = createLine()
-    end
+    elseif i == 2 then
+        layout.walls[5] = createLine(0.5*wallSize, 1/4*wallSize,0.5*wallSize, 3/4*wallSize)
+        layout.walls[6] = createLine(1/4*wallSize, 0.5*wallSize, 3/4*wallSize, 0.5*wallSize)
+        layout.points = {{1/6*wallSize,1/6*wallSize},{5/6*wallSize,1/6*wallSize},{5/6*wallSize, 5/6*wallSize},{1/6*wallSize, 5/6*wallSize}}
 
-    if i == 3 then
-        layout.walls[5] = createLine()
-        layout.walls[6] = createLine()
-        layout.walls[7] = createLine()
-        layout.walls[8] = createLine()
+    elseif i == 3 then
+        layout.walls[5] = createLine(wallSize*0.5, wallSize*1/6,wallSize*0.5, wallSize*2/6)
+        layout.walls[6] = createLine(wallSize*0.5, wallSize*5/6,wallSize*0.5, wallSize*4/6)
+        layout.walls[7] = createLine(wallSize*1/6,wallSize*0.5,wallSize*2/6,wallSize*0.5)
+        layout.walls[8] = createLine(wallSize*5/6,wallSize*0.5,wallSize*4/6,wallSize*0.5)
+        layout.points = {{0.5*wallSize, 0.5*wallSize},{wallSize/4, wallSize/4},{wallSize/4, wallSize*3/4},{wallSize*3/4, wallSize*3/4},{wallSize*3/4, wallSize/4}}
     end
     
     return layout
+end
+-- Spawna inimigos de acordo com o tempo decorrido na wave
+function spawnEnemies(dt)
+    waveTime = waveTime + dt
+    if waveTime > spawnTime then
+        waveTime = waveTime - spawnTime
+
+        for i = 1 + spawnedCount, groupSize + spawnedCount do
+            if i > #inimigos then 
+                break 
+            end
+            ponto = spawnPoints[math.random(#spawnPoints)]
+            inimigos[i].x = ponto[1] + math.random(-20, 20)
+            inimigos[i].y = ponto[2] + math.random(-20, 20)
+        end
+        spawnedCount = spawnedCount + groupSize
+    end
 end
