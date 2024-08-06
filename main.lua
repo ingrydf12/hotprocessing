@@ -219,7 +219,7 @@ function love.draw()
     love.graphics.line(mouseX - 20, mouseY, mouseX + 20, mouseY)
     love.graphics.line(mouseX, mouseY - 18, mouseX, mouseY + 18)
     
-    -- Draw UI
+    -- MARK: Draw UI
     love.graphics.setColor(white)
     counter()
 end
@@ -358,9 +358,10 @@ function iniciarWave(wave)
     -- Aumenta 3 inimigos a cada wave 
     inimigosVivos = inimigosPorWave + 3 * wave
     for i = 1, inimigosVivos do
+        local var = math.random(2)
         inimigos[i] = createEnemy(3000,0)
-        inimigos[i].anims[1] = newAnim("assets/sprites/enemy/walk", 5) -- Animação de andar
-        inimigos[i].anims[2] = newAnim("assets/sprites/enemy/enemy-death", 1, false) -- Animação de morte
+        inimigos[i].anims[1] = newAnim("assets/sprites/enemy" .. var .. "/walk", 5) -- Animação de andar
+        inimigos[i].anims[2] = newAnim("assets/sprites/enemy".. var .."/enemy-death", 1, false) -- Animação de morte
         -- inimigos[i].anims[2] = newAnim ("assets/sprites/enemy/death", 5)
     end
     -- Aumenta o tamanho das paredes a partir da wave 5
