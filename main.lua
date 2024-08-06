@@ -6,7 +6,7 @@ local red = {0.7, 0, 0} -- Tiro
 local white = {1,1,1}
 local black = {0,0,0}
 
-local player = {frame = 1, anims = {}, hitbox = {x = posx, y = posy, r = 20}, health = 5}
+local player = {frame = 1, anims = {}, hitbox = {x = posx, y = posy, r = 20}, vida = 5, iTime = 0}
 --local camera = {x = posx, y = posy}
 local inimigos = {}
 local walls = {}
@@ -134,6 +134,12 @@ function love.update(dt)
             end
         end
 
+        -- Colisão com o player 
+        if player.iTime <= 0 and dist(inimigos[i].x,inimigos[i].y, posx, posy) < 10 then
+            player.vida = player.vida - 1
+            player.iTime = 0.5
+        end
+
 
     end
 
@@ -196,6 +202,8 @@ function love.draw()
     end
     love.graphics.pop()
 
+    -- MARK: Draw UI
+    love.graphics.setColor(white)
     -- Desenha UI mostrando os controles usados pelo player
     local teclaW = love.graphics.newImage("assets/sprites/teclas/teclaw.png")
     local teclaA = love.graphics.newImage("assets/sprites/teclas/teclaa.png")
@@ -219,9 +227,9 @@ function love.draw()
     love.graphics.line(mouseX - 20, mouseY, mouseX + 20, mouseY)
     love.graphics.line(mouseX, mouseY - 18, mouseX, mouseY + 18)
     
-    -- MARK: Draw UI
-    love.graphics.setColor(white)
+    -- Info
     counter()
+    love.graphics.print(player.vida .. " HP", 600, 700)
 end
 
 function love.mousepressed(x, y, button, istouch, presses)
@@ -270,7 +278,7 @@ end
 -- MARK: Check hit on Enemy
 function verificarAcerto(tiro, i)
     if tiro then
-        local distancia = math.sqrt((tiro.x - inimigos[i].x)^2 + (tiro.y - inimigos[i].y)^2)
+        local distancia = dist(tiro.x, tiro.y, inimigos[i].x, inimigos[i].y)
         if distancia < 20 then
             inimigos[i].vida = inimigos[i].vida - 1
             inimigos[i].flashTime = 0.4 -- 400 ms de piscar
@@ -315,6 +323,9 @@ function PlayerUpdate(direction, dt)
 
     -- Atualiza qual o frame de animação
     updateFrame(player.anims[1], dt)
+
+    -- Tempo de imunidade
+    player.iTime = player.iTime - dt
 end
 
 function dist(x1, y1, x2, y2)
