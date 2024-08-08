@@ -203,25 +203,7 @@ function love.draw()
     love.graphics.pop()
 
     -- MARK: Draw UI
-    -- Desenha UI mostrando os controles usados pelo player
-    -- nao recomendo usar função que carrega arquivo no draw(), de preferencia carrega logo no global e só usa o draw pra desenhar
-    local teclaW = love.graphics.newImage("assets/sprites/teclas/teclaw.png")
-    local teclaA = love.graphics.newImage("assets/sprites/teclas/teclaa.png")
-    local teclaS = love.graphics.newImage("assets/sprites/teclas/teclas.png")
-    local teclaD = love.graphics.newImage("assets/sprites/teclas/teclad.png")
-
-    if love.keyboard.isDown("w") then
-        love.graphics.draw(teclaW, 1100, 40,0,2,2)
-    end
-    if love.keyboard.isDown("a") then
-        love.graphics.draw(teclaA, 1100, 70,0,2,2)
-    end
-    if love.keyboard.isDown("s") then
-        love.graphics.draw(teclaS, 1100, 100,0,2,2)
-    end
-    if love.keyboard.isDown("d") then
-        love.graphics.draw(teclaD, 1100, 130,0,2,2)
-    end
+    controlsView()
 
     -- Crosshair
     love.graphics.line(mouseX - 20, mouseY, mouseX + 20, mouseY)
@@ -464,5 +446,27 @@ function spawnEnemies(dt)
             inimigos[i].y = ponto[2] + math.random(-20, 20)
         end
         spawnedCount = spawnedCount + groupSize
+    end
+end
+
+-- Carregar as imagens uma vez fora da função
+local teclaW = love.graphics.newImage("assets/sprites/teclas/teclaw.png")
+local teclaA = love.graphics.newImage("assets/sprites/teclas/teclaa.png")
+local teclaS = love.graphics.newImage("assets/sprites/teclas/teclas.png")
+local teclaD = love.graphics.newImage("assets/sprites/teclas/teclad.png")
+
+function controlsView()
+    -- Desenha UI mostrando os controles usados pelo player
+    if love.keyboard.isDown("w") then
+        love.graphics.draw(teclaW, 1100, 40, 0, 2, 2)
+    end
+    if love.keyboard.isDown("a") then
+        love.graphics.draw(teclaA, 1100, 70, 0, 2, 2)
+    end
+    if love.keyboard.isDown("s") then
+        love.graphics.draw(teclaS, 1100, 100, 0, 2, 2)
+    end
+    if love.keyboard.isDown("d") then
+        love.graphics.draw(teclaD, 1100, 130, 0, 2, 2)
     end
 end
