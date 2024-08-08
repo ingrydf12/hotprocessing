@@ -456,3 +456,25 @@ function chooseLayout(i)
     
     return layout
 end
+
+-- Carregar as imagens uma vez fora da função
+local teclaW = love.graphics.newImage("assets/sprites/teclas/teclaw.png")
+local teclaA = love.graphics.newImage("assets/sprites/teclas/teclaa.png")
+local teclaS = love.graphics.newImage("assets/sprites/teclas/teclas.png")
+local teclaD = love.graphics.newImage("assets/sprites/teclas/teclad.png")
+
+function controlsView()
+    -- Desenha UI mostrando os controles usados pelo player
+    if love.keyboard.isDown("w") then
+        love.graphics.draw(teclaW, 1100, 40, 0, 2, 2)
+    end
+    if love.keyboard.isDown("a") then
+        love.graphics.draw(teclaA, 1100, 70, 0, 2, 2)
+    end
+    if love.keyboard.isDown("s") then
+        love.graphics.draw(teclaS, 1100, 100, 0, 2, 2)
+    end
+    if love.keyboard.isDown("d") then
+        love.graphics.draw(teclaD, 1100, 130, 0, 2, 2)
+    end
+end
