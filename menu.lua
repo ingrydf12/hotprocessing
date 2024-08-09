@@ -1,21 +1,28 @@
 -- Menu.lua
-local menu = {}
+-- MARK: - Globais
+local menu = {titleImage, backgroundImage, playButtonImage, creditsButtonImage,
+time = 0, 
+waveAmplitude = 10,
+waveFrequency = 2,
+titleScale = 1.25,
+buttonScale = 1.2,
+playButtonX, playButtonY, creditsButtonX, creditsButtonY}
 -- Aqui não tem referência ao game.lua (não existente nesse arquivo) e não está na main 
 
--- MARK: - Globais
-local titleImage, backgroundImage, playButtonImage, creditsButtonImage
+--[[local titleImage, backgroundImage, playButtonImage, creditsButtonImage
 local time = 0
 local waveAmplitude = 10
 local waveFrequency = 2
 local titleScale = 0.25
 local buttonScale = 1.2
-local playButtonX, playButtonY, creditsButtonX, creditsButtonY
+local playButtonX, playButtonY, creditsButtonX, creditsButtonY]]
 
 -- MARK: - Load
 local function loadImages()
-    backgroundImage = love.graphics.newImage("assets/menuDefault/style.png")
-    titleImage = love.graphics.newImage("assets/menuDefault/titleDefault.png")
-    playButtonImage = love.graphics.newImage("assets/buttons/play_button_1.png")
+    menu.backgroundImage = love.graphics.newImage("assets/menuDefault/style.png")
+    menu.titleImage = love.graphics.newImage("assets/menuDefault/titleDefault.png")
+    menu.playButtonImage = love.graphics.newImage("assets/sprites/buttons/play_button_1.png")
+    menu.hover = love.graphics.newImage("assets/sprites/buttons/play_button_2.png")
     --creditsButtonImage = love.graphics.newImage("credits-button.png")
 end
 
@@ -24,47 +31,47 @@ local function setupWindowAndButtons()
     love.window.setMode(1200, 800)
     love.window.setTitle("Hotline ISMD")
 
-    local buttonWidth = playButtonImage:getWidth() * buttonScale
-    local buttonHeight = playButtonImage:getHeight() * buttonScale
+    local buttonWidth = menu.playButtonImage:getWidth() * menu.buttonScale
+    local buttonHeight = menu.playButtonImage:getHeight() * menu.buttonScale
 
-    playButtonX = (1200 - buttonWidth) / 2
-    playButtonY = 600
-    creditsButtonX = (1200 - buttonWidth) / 2
-    creditsButtonY = 670
+    menu.playButtonX = (1200 - buttonWidth) / 2
+    menu.playButtonY = 600
+    menu.creditsButtonX = (1200 - buttonWidth) / 2
+    menu.creditsButtonY = 670
 end
 
 -- Função para calcular o efeito de onda
 local function getWaveOffset()
-    return waveAmplitude * math.sin(waveFrequency * time)
+    return menu.waveAmplitude * math.sin(menu.waveFrequency * menu.time)
 end
 
 -- Função de carregamento inicial
-function love.load()
+function menu.load()
     loadImages()
     setupWindowAndButtons()
 end
 
 -- MARK: - UP Wave Effect
 function menu.update(dt)
-    time = time + dt
+    menu.time = menu.time + dt
 end
 
 -- MARK: - Draw
 function menu.draw()
     -- Desenhar o fundo
-    love.graphics.draw(backgroundImage, 0, 0, 0, 1200 / backgroundImage:getWidth(), 800 / backgroundImage:getHeight())
+    love.graphics.draw(menu.backgroundImage, 0, 0, 0, 1200 / menu.backgroundImage:getWidth(), 800 / menu.backgroundImage:getHeight())
 
     -- Calcular a posição do título com efeito de onda
-    local titleWidth = titleImage:getWidth() * titleScale
-    local titleHeight = titleImage:getHeight() * titleScale
+    local titleWidth = menu.titleImage:getWidth() * menu.titleScale
+    local titleHeight = menu.titleImage:getHeight() * menu.titleScale
     local waveOffset = getWaveOffset()
 
     -- Desenhar o título com efeito de onda e escala
-    love.graphics.draw(titleImage, (1200 - titleWidth) / 2, 50 + waveOffset, 0, titleScale, titleScale)
+    love.graphics.draw(menu.titleImage, (1200 - titleWidth) / 2, 50 + waveOffset, 0, menu.titleScale, menu.titleScale)
 
     -- Desenhar botões com escala e centralização
     love.graphics.setColor(1, 1, 1)
-    love.graphics.draw(playButtonImage, playButtonX, playButtonY, 0, buttonScale, buttonScale, playButtonImage:getWidth() / 2, playButtonImage:getHeight() / 2)
+    love.graphics.draw(menu.playButtonImage, menu.playButtonX, menu.playButtonY, 0, menu.buttonScale, menu.buttonScale, menu.playButtonImage:getWidth() / 2, menu.playButtonImage:getHeight() / 2)
     --love.graphics.draw(creditsButtonImage, creditsButtonX, creditsButtonY, 0, buttonScale, buttonScale, creditsButtonImage:getWidth() / 2, creditsButtonImage:getHeight() / 2)
 end
 

@@ -22,6 +22,9 @@ local floorScale = 1 -- Escala padrão do piso
 local spawnTime = 1.5 --intervalo entre spawn de inimigos (em segundos)
 local groupSize = 3 --quantidade de inimigos por spawn
 local waveTime = 0 --tempo na wave, atualizado automaticamente
+
+local gameover = false
+local inMenu = true
 -- MARK: LOVE LOAD
 function love.load()
     -- UI/UX
@@ -39,13 +42,15 @@ function love.load()
     require "waveSystem"
     require "raycast"
     require "animation"
+    menu = require("menu")
+    menu.load()
 
     iniciarWave(currentWave)
 
-    -- Carrega animação teste do player
+    -- Carrega animação de andar do player
     player.anims[1] = newAnim("assets/sprites/player", 5)
 
-    chao = love.graphics.newImage("assets/sprites/floor/chao.png")
+    --chao = love.graphics.newImage("assets/sprites/floor/chao.png")
 
     -- Inicializa o array de tiros
     tiros = {}
@@ -57,6 +62,18 @@ end
 
 -- MARK: LOVE UPDATE
 function love.update(dt)
+    if inMenu then
+        menu.update(dt)
+        return
+    end
+    if gameover then
+        --botar os checks da tela de gameover aqui (reiniciar com a tecla 'r' sei la)
+        if love.keyboard.isDown("r") then
+            newGame()
+        end
+        return
+    end
+
     local dir = {0, 0}
     if love.keyboard.isDown("a") then
         dir[1] = -1
@@ -109,19 +126,9 @@ function love.update(dt)
             updateFrame(inimigos[i].anims[1], dt) -- Atualiza animação normal
         end
 
-        -- Animação dos inimigos
-        if not inimigos[i].morto then
-            updateFrame(inimigos[i].anims[1], dt)
-        end
-
-        if inimigos[i].morto then
-            updateFrame(inimigos[i].anims[2], dt)
-        end
-
         -- MARK: Visão dos inimigos
         for _ = 1, #walls do
             if inimigos[i].morto then
-                
                 break
             end
             local ponto = collisionPoint({inimigos[i].x, inimigos[i].y, posx, posy}, walls[_])
@@ -146,15 +153,36 @@ function love.update(dt)
     -- # MARK: Verificar se a wave foi completada
     spawnEnemies(dt)
     verificarWaveCompleta()
+    if player.vida <= 0 and not gameover then
+        gameover = true
+    end
 
 end
 
 -- MARK: LOVE DRAW
 function love.draw()
-    love.graphics.clear(0, 0, 0, 1)
-    
     local mouseX = love.mouse.getX()
     local mouseY = love.mouse.getY()
+
+    love.graphics.clear(0, 0, 0, 1)
+    
+    if inMenu then
+        menu.draw()
+        -- EXCLUI ESSE LIXO!!! [[
+        if mouseX>479 and mouseX<600 and mouseY>548 and mouseY<650 then
+            menu.playButtonImage = menu.hover
+        else
+            menu.playButtonImage = love.graphics.newImage("assets/sprites/buttons/play_button_1.png")
+        end
+        --]]!!
+        return
+    end
+
+    if gameover then
+        love.graphics.print("tela de gameover aqui", 500,400)
+        love.graphics.print("press 'r' to restart", 515, 450)
+        return
+    end
     
     love.graphics.push()
     love.graphics.translate(-posx+600, -posy+400)
@@ -233,6 +261,14 @@ function love.draw()
 end
 
 function love.mousepressed(x, y, button, istouch, presses)
+    if inMenu then
+        if x>479 and x<600 and y>548 and y<650 then
+            inMenu = false
+            newGame()
+        end
+        return
+    end
+        
     if button == 1 then
         tiro_atual = tiro_atual + 1
         if tiro_atual > LIMITE then
@@ -374,7 +410,7 @@ function iniciarWave(wave)
         local var = math.random(2)
         inimigos[i] = createEnemy(3000,0)
         inimigos[i].anims[1] = newAnim("assets/sprites/enemy" .. var .. "/walk", 5) -- Animação de andar
-        inimigos[i].anims[2] = newAnim("assets/sprites/enemy".. var .."/enemy-death", 1, false) -- Animação de morte
+        inimigos[i].anims[2] = newAnim("assets/sprites/enemy".. var .."/enemy-death", 2, false) -- Animação de morte
         -- inimigos[i].anims[2] = newAnim ("assets/sprites/enemy/death", 5)
     end
     -- Aumenta o tamanho das paredes a partir da wave 5
@@ -414,6 +450,7 @@ function clamp(a, min, max)
     end
     return a
 end
+
 -- MARK: Room configs
 function chooseLayout(i)
     local layout = {walls = {createLine(0, 0, wallSize, 0), 
@@ -466,4 +503,15 @@ function spawnEnemies(dt)
         end
         spawnedCount = spawnedCount + groupSize
     end
+end
+
+function newGame()
+    for i = 1, #tiros do
+        resetTiro(tiros[i])
+    end
+    currentWave = 1
+    iniciarWave(currentWave)
+    posx, posy = 200, 200
+    player.vida = 5
+    gameover = false
 end
