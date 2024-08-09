@@ -1,4 +1,5 @@
 -- Menu.lua
+local menu = {}
 -- Aqui não tem referência ao game.lua (não existente nesse arquivo) e não está na main 
 
 -- MARK: - Globais
@@ -44,12 +45,12 @@ function love.load()
 end
 
 -- MARK: - UP Wave Effect
-function love.update(dt)
+function menu.update(dt)
     time = time + dt
 end
 
 -- MARK: - Draw
-function love.draw()
+function menu.draw()
     -- Desenhar o fundo
     love.graphics.draw(backgroundImage, 0, 0, 0, 1200 / backgroundImage:getWidth(), 800 / backgroundImage:getHeight())
 
@@ -66,3 +67,5 @@ function love.draw()
     love.graphics.draw(playButtonImage, playButtonX, playButtonY, 0, buttonScale, buttonScale, playButtonImage:getWidth() / 2, playButtonImage:getHeight() / 2)
     --love.graphics.draw(creditsButtonImage, creditsButtonX, creditsButtonY, 0, buttonScale, buttonScale, creditsButtonImage:getWidth() / 2, creditsButtonImage:getHeight() / 2)
 end
+
+return menu
