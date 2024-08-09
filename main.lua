@@ -24,6 +24,7 @@ local groupSize = 3 --quantidade de inimigos por spawn
 local waveTime = 0 --tempo na wave, atualizado automaticamente
 
 local gameover = false
+local inMenu = true
 -- MARK: LOVE LOAD
 function love.load()
     -- UI/UX
@@ -41,6 +42,8 @@ function love.load()
     require "waveSystem"
     require "raycast"
     require "animation"
+    menu = require("menu")
+    menu.load()
 
     iniciarWave(currentWave)
 
@@ -59,7 +62,10 @@ end
 
 -- MARK: LOVE UPDATE
 function love.update(dt)
-
+    if inMenu then
+        menu.update(dt)
+        return
+    end
     if gameover then
         --botar os checks da tela de gameover aqui (reiniciar com a tecla 'r' sei la)
         if love.keyboard.isDown("r") then
@@ -120,19 +126,9 @@ function love.update(dt)
             updateFrame(inimigos[i].anims[1], dt) -- Atualiza animação normal
         end
 
-        --[[ Animação dos inimigos
-        if not inimigos[i].morto then
-            updateFrame(inimigos[i].anims[1], dt)
-        end
-
-        if inimigos[i].morto then
-            updateFrame(inimigos[i].anims[2], dt)
-        end]]
-
         -- MARK: Visão dos inimigos
         for _ = 1, #walls do
             if inimigos[i].morto then
-                
                 break
             end
             local ponto = collisionPoint({inimigos[i].x, inimigos[i].y, posx, posy}, walls[_])
@@ -165,16 +161,28 @@ end
 
 -- MARK: LOVE DRAW
 function love.draw()
+    local mouseX = love.mouse.getX()
+    local mouseY = love.mouse.getY()
+
     love.graphics.clear(0, 0, 0, 1)
+    
+    if inMenu then
+        menu.draw()
+        -- EXCLUI ESSE LIXO!!! [[
+        if mouseX>479 and mouseX<600 and mouseY>548 and mouseY<650 then
+            menu.playButtonImage = menu.hover
+        else
+            menu.playButtonImage = love.graphics.newImage("assets/sprites/buttons/play_button_1.png")
+        end
+        --]]!!
+        return
+    end
 
     if gameover then
         love.graphics.print("tela de gameover aqui", 500,400)
         love.graphics.print("press 'r' to restart", 515, 450)
         return
     end
-    
-    local mouseX = love.mouse.getX()
-    local mouseY = love.mouse.getY()
     
     love.graphics.push()
     love.graphics.translate(-posx+600, -posy+400)
@@ -253,6 +261,14 @@ function love.draw()
 end
 
 function love.mousepressed(x, y, button, istouch, presses)
+    if inMenu then
+        if x>479 and x<600 and y>548 and y<650 then
+            inMenu = false
+            newGame()
+        end
+        return
+    end
+        
     if button == 1 then
         tiro_atual = tiro_atual + 1
         if tiro_atual > LIMITE then
