@@ -470,7 +470,8 @@ function chooseLayout(i)
     
     return layout
 end
--- Spawna inimigos de acordo com o tempo decorrido na wave
+
+-- MARK: - Spawna inimigos de acordo com o tempo decorrido na wave
 function spawnEnemies(dt)
     waveTime = waveTime + dt
     if waveTime > spawnTime then
