@@ -50,7 +50,7 @@ function love.load()
     -- Carrega animação de andar do player
     player.anims[1] = newAnim("assets/sprites/player", 5)
 
-    --chao = love.graphics.newImage("assets/sprites/floor/chao.png")
+    chao = love.graphics.newImage("assets/sprites/floor/floor1.png")
 
     -- Inicializa o array de tiros
     tiros = {}
@@ -168,15 +168,19 @@ function love.draw()
     
     if inMenu then
         menu.draw()
-        -- EXCLUI ESSE LIXO!!! [[
-        if mouseX>479 and mouseX<600 and mouseY>548 and mouseY<650 then
+        local mouseX, mouseY = love.mouse.getPosition()
+    
+        -- Verifica se o mouse está sobre o botão de play
+        if mouseX > menu.playButtonX and mouseX < (menu.playButtonX + menu.playButtonImage:getWidth() * menu.buttonScale) and 
+           mouseY > menu.playButtonY and mouseY < (menu.playButtonY + menu.playButtonImage:getHeight() * menu.buttonScale) then
             menu.playButtonImage = menu.hover
         else
             menu.playButtonImage = love.graphics.newImage("assets/sprites/buttons/play_button_1.png")
         end
-        --]]!!
+        
         return
     end
+    
 
     if gameover then
         love.graphics.print("tela de gameover aqui", 500,400)
@@ -188,6 +192,12 @@ function love.draw()
     love.graphics.translate(-posx+600, -posy+400)
 
     love.graphics.setColor(white)
+    
+    for x = 0, wallSize, chao:getWidth() * floorScale do
+        for y = 0, wallSize, chao:getHeight() * floorScale do
+            love.graphics.draw(chao, x, y, 0, floorScale, floorScale)
+        end
+    end
     
     -- Paredes (só pra saber onde estão enquanto não tem sprite)
     for i = 1, #walls do

@@ -19,8 +19,8 @@ local playButtonX, playButtonY, creditsButtonX, creditsButtonY]]
 
 -- MARK: - Load
 local function loadImages()
-    menu.backgroundImage = love.graphics.newImage("assets/menuDefault/style.png")
-    menu.titleImage = love.graphics.newImage("assets/menuDefault/titleDefault.png")
+    menu.backgroundImage = love.graphics.newImage("assets/menuDefault/pixl.png")
+    menu.titleImage = love.graphics.newImage("assets/menuDefault/hotlinetitle.png")
     menu.playButtonImage = love.graphics.newImage("assets/sprites/buttons/play_button_1.png")
     menu.hover = love.graphics.newImage("assets/sprites/buttons/play_button_2.png")
     --creditsButtonImage = love.graphics.newImage("credits-button.png")
@@ -28,14 +28,18 @@ end
 
 -- MARK: - Setup ao invés de colocar dentro do load
 local function setupWindowAndButtons()
+    --Setting
+    local baseWidth = 1300
+    local baseHeight = 600
+
     love.window.setMode(1200, 800)
     love.window.setTitle("Hotline ISMD")
 
     local buttonWidth = menu.playButtonImage:getWidth() * menu.buttonScale
     local buttonHeight = menu.playButtonImage:getHeight() * menu.buttonScale
 
-    menu.playButtonX = (1200 - buttonWidth) / 2
-    menu.playButtonY = 600
+    menu.playButtonX = (baseWidth - buttonWidth) / 2
+    menu.playButtonY = baseHeight * (600 / baseHeight)
     menu.creditsButtonX = (1200 - buttonWidth) / 2
     menu.creditsButtonY = 670
 end
@@ -56,7 +60,7 @@ end
 -- Função de carregamento inicial
 function menu.load()
     loadImages()
-    musicSt()
+    --musicSt()
     setupWindowAndButtons()
 end
 
@@ -86,7 +90,7 @@ function menu.draw()
 
     -- Desenhar botões com escala e centralização
     love.graphics.setColor(1, 1, 1)
-    love.graphics.draw(menu.playButtonImage, menu.playButtonX, menu.playButtonY, 0, menu.buttonScale, menu.buttonScale, menu.playButtonImage:getWidth() / 2, menu.playButtonImage:getHeight() / 2 + 100)
+    love.graphics.draw(menu.playButtonImage, menu.playButtonX, menu.playButtonY, 0, menu.buttonScale, menu.buttonScale, menu.playButtonImage:getWidth() /2, menu.playButtonImage:getHeight() / 2 + 100)
     --love.graphics.draw(creditsButtonImage, creditsButtonX, creditsButtonY, 0, buttonScale, buttonScale, creditsButtonImage:getWidth() / 2, creditsButtonImage:getHeight() / 2)
 end
 
