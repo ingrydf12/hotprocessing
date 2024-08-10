@@ -6,7 +6,7 @@ local red = {0.7, 0, 0} -- Tiro
 local white = {1,1,1}
 local black = {0,0,0}
 
-local player = {frame = 1, anims = {}, hitbox = {x = posx, y = posy, r = 20}, vida = 5, iTime = 0}
+local player = {frame = 1, anims = {}, hitbox = {x = posx, y = posy, r = 20}, vida = 5, iTime = 0, angle = 0}
 --local camera = {x = posx, y = posy}
 local inimigos = {}
 local walls = {}
@@ -22,6 +22,12 @@ local floorScale = 1 -- Escala padrão do piso
 local spawnTime = 1.5 --intervalo entre spawn de inimigos (em segundos)
 local groupSize = 3 --quantidade de inimigos por spawn
 local waveTime = 0 --tempo na wave, atualizado automaticamente
+
+local gameover = false
+local inMenu = true
+local inTransition = false
+local prop = {fadeColor = {0,0,0,0}}
+
 -- MARK: LOVE LOAD
 function love.load()
     -- UI/UX
@@ -39,13 +45,18 @@ function love.load()
     require "waveSystem"
     require "raycast"
     require "animation"
+    menu = require("menu")
+    menu.load()
+    tween = require("tween")
+    transition = tween.new(1,prop, {fadeColor = {0,0,0,1}})
 
     iniciarWave(currentWave)
 
-    -- Carrega animação teste do player
+    -- Carrega animação de andar do player
     player.anims[1] = newAnim("assets/sprites/player", 5)
 
-    chao = love.graphics.newImage("assets/sprites/floor/chao.png")
+    chao = love.graphics.newImage("assets/sprites/floor/floor1.png")
+    gameOverImg = love.graphics.newImage ("assets/sprites/gameOverScreen/gameOverTitle.png") -- Load gameOverTitle
 
     -- Inicializa o array de tiros
     tiros = {}
@@ -57,6 +68,37 @@ end
 
 -- MARK: LOVE UPDATE
 function love.update(dt)
+    if inTransition then
+        local coiso = transition:update(dt)
+        if coiso then
+            inTransition = false
+            currentWave = currentWave + 1
+            spdEnemy = spdEnemy + 0.5 -- Aumenta a velocidade a cada wave
+            iniciarWave(currentWave)
+            waveTime = 0
+        end
+        return
+    else
+        prop.fadeColor = {0,0,0,0}
+    end
+
+    if inMenu then
+        menu.update(dt)
+        return
+    end
+
+    if gameover then
+        --botar os checks da tela de gameover aqui (reiniciar com a tecla 'r' sei la)
+        if love.keyboard.isDown("r") then
+            newGame()
+        end
+        -- voltar pro menu
+        if love.keyboard.isDown("b") then
+            inMenu = true
+        end
+        return
+    end
+
     local dir = {0, 0}
     if love.keyboard.isDown("a") then
         dir[1] = -1
@@ -77,8 +119,7 @@ function love.update(dt)
     end
 
     PlayerUpdate(dir, dt)
-    --camera = {x = clamp(posx, wallSize/2-50, wallSize/2+50), y = clamp(posy, wallSize/2-50, wallSize/2+50)}
-
+    
     -- Atualiza tiros e verifica o estado dos inimigos
     for i = 1, LIMITE do
         updateTiro(tiros[i])
@@ -91,7 +132,18 @@ function love.update(dt)
     
     for i = 1, #inimigos do
         if not inimigos[i].morto and not inimigos[i].cego then
-            moverInimigo(dt, i)
+            inimigos[i].roamTime = 0
+            inimigos[i].roamPos.x = inimigos[i].x
+            inimigos[i].roamPos.y = inimigos[i].y
+
+            moverInimigo(i)
+        elseif not inimigos[i].morto and inimigos[i].cego then
+            if inimigos[i].roamTime >= 1.7 then
+                inimigos[i].roamTime = 0
+                inimigos[i].roamPos.x = inimigos[i].x + math.random(-4,4)*10
+                inimigos[i].roamPos.y = inimigos[i].y + math.random(-4,4)*10
+            end
+            enemyRoam(i)
         end
     end
 
@@ -109,25 +161,16 @@ function love.update(dt)
             updateFrame(inimigos[i].anims[1], dt) -- Atualiza animação normal
         end
 
-        -- Animação dos inimigos
-        if not inimigos[i].morto then
-            updateFrame(inimigos[i].anims[1], dt)
-        end
-
-        if inimigos[i].morto then
-            updateFrame(inimigos[i].anims[2], dt)
-        end
-
         -- MARK: Visão dos inimigos
         for _ = 1, #walls do
             if inimigos[i].morto then
-                
                 break
             end
             local ponto = collisionPoint({inimigos[i].x, inimigos[i].y, posx, posy}, walls[_])
             --se existir um ponto de interseção E o ponto estiver mais próximo doq o player
             if ponto and dist(inimigos[i].x, inimigos[i].y, ponto[1], ponto[2]) < dist(inimigos[i].x, inimigos[i].y, posx, posy) then
                 inimigos[i].cego = true
+                inimigos[i].roamTime = inimigos[i].roamTime + dt
                 break
             else
                 inimigos[i].cego = false
@@ -146,20 +189,72 @@ function love.update(dt)
     -- # MARK: Verificar se a wave foi completada
     spawnEnemies(dt)
     verificarWaveCompleta()
+    if player.vida <= 0 and not gameover then
+        gameover = true
+    end
 
 end
 
 -- MARK: LOVE DRAW
 function love.draw()
-    love.graphics.clear(0, 0, 0, 1)
-    
     local mouseX = love.mouse.getX()
     local mouseY = love.mouse.getY()
+    if not inTransition then
+        player.angle = angleToPoint(600, 400, mouseX, mouseY)+math.pi/2
+    end
+    love.graphics.clear(0, 0, 0, 1)
+    
+    if inMenu then
+        menu.draw()
+        local mouseX, mouseY = love.mouse.getPosition()
+    
+        -- Verifica se o mouse está sobre o botão de play
+        if mouseX > menu.playButtonX and mouseX < (menu.playButtonX + menu.playButtonImage:getWidth() * menu.buttonScale) and 
+           mouseY > menu.playButtonY and mouseY < (menu.playButtonY + menu.playButtonImage:getHeight() * menu.buttonScale) then
+            menu.playButtonImage = menu.hover
+        else
+            menu.playButtonImage = love.graphics.newImage("assets/sprites/buttons/play_button_1.png")
+        end
+        
+        return
+    end
+    
+-- Setei o gameOverTitle aqui, variavel no love.draw = gameOverImg
+    if gameover then
+        -- GameOverTitle (aumentar com escala)
+        local GOWidth = gameOverImg:getWidth()
+        local GOHeight = gameOverImg:getHeight()
+        local x = (1200 - GOWidth) / 2
+        local y = (800 - GOHeight) / 2
+        -- Text
+        local text = "Press 'r' to restart"
+        local textWidth = font:getWidth(text)
+        local textHeight = font:getHeight(text)
+        local textX = (1200 - textWidth) / 2
+        local textY = (800 - textHeight) / 2 + GOHeight / 2 + 20
+
+        local text2 = "Press 'b' to back to menu"
+        local text2Width = font:getWidth(text2)
+        local text2Height = font:getHeight(text2)
+        local text2X = (1200 - text2Width) / 2
+        local text2Y = (800 - text2Height) / 2 + GOHeight / 2 + 50
+
+        love.graphics.draw(gameOverImg, x, y)
+        love.graphics.print(text, textX, textY)
+        love.graphics.print(text2, text2X, text2Y)
+        return
+    end
     
     love.graphics.push()
     love.graphics.translate(-posx+600, -posy+400)
 
     love.graphics.setColor(white)
+    
+    for x = 0, wallSize, chao:getWidth() * floorScale do
+        for y = 0, wallSize, chao:getHeight() * floorScale do
+            love.graphics.draw(chao, x, y, 0, floorScale, floorScale)
+        end
+    end
     
     -- Paredes (só pra saber onde estão enquanto não tem sprite)
     for i = 1, #walls do
@@ -199,11 +294,8 @@ function love.draw()
     -- Draw player
     love.graphics.setColor(white)
     local frame = getFrame(player.anims[1])
-    love.graphics.draw(frame, posx, posy, angleToPoint(600, 400, mouseX, mouseY)+math.pi/2, 1, 1, frame:getWidth()/2, frame:getHeight()/2)
+    love.graphics.draw(frame, posx, posy, player.angle, 1, 1, frame:getWidth()/2, frame:getHeight()/2)
     love.graphics.pop()
-
-    -- MARK: Draw UI
-    controlsView()
 
     -- Crosshair
     love.graphics.line(mouseX - 20, mouseY, mouseX + 20, mouseY)
@@ -212,9 +304,22 @@ function love.draw()
     -- Info
     counter()
     love.graphics.print(player.vida .. " HP", 580, 450)
+    if inTransition then
+        love.graphics.setColor(prop.fadeColor)
+        love.graphics.rectangle("fill", 0,0,1200,800)
+        return
+    end
 end
 
 function love.mousepressed(x, y, button, istouch, presses)
+    if inMenu then
+        if x>479 and x<600 and y>548 and y<650 then
+            inMenu = false
+            newGame()
+        end
+        return
+    end
+        
     if button == 1 then
         tiro_atual = tiro_atual + 1
         if tiro_atual > LIMITE then
@@ -231,13 +336,16 @@ end
 
 -- MARK: UP Tiro
 function updateTiro(tiro)
-    if tiro then
+    for _ = 1, #walls do
+        if collides({x = tiro.x, y = tiro.y, r = 15}, walls[_]) then
+            resetTiro(tiro)
+        end
+    end
         tiro.x = tiro.x + tiro.velx
         tiro.y = tiro.y + tiro.vely
         
-        if tiro.x >= posx+600 or tiro.y >= posy+400 or tiro.x < posx-600 or tiro.y < posy-400 then
-            resetTiro(tiro)
-        end
+    if tiro.x >= posx+600 or tiro.y >= posy+400 or tiro.x < posx-600 or tiro.y < posy-400 then
+        resetTiro(tiro)
     end
 end
 
@@ -250,10 +358,56 @@ function resetTiro(tiro)
 end
 
 -- MARK: - IA Enemy
-function moverInimigo(dt, i)
+function moverInimigo(i)
     local angle = angleToPoint(inimigos[i].x, inimigos[i].y, posx, posy)
-    inimigos[i].x = inimigos[i].x + math.cos(angle) * inimigos[i].spd
-    inimigos[i].y = inimigos[i].y + math.sin(angle) * inimigos[i].spd
+    local collide_count = {0,0}
+    for _ = 1, #walls do
+        inimigos[i].hitbox.x = inimigos[i].x + math.cos(angle) * inimigos[i].spd
+        if collides(inimigos[i].hitbox, walls[_]) then
+            collide_count[1] = collide_count[1] + 1
+        end
+        inimigos[i].hitbox.x = inimigos[i].x
+
+        inimigos[i].hitbox.y = inimigos[i].y + math.sin(angle) * inimigos[i].spd
+        if collides(inimigos[i].hitbox, walls[_]) then
+            collide_count[2] = collide_count[2] + 1
+        end
+        inimigos[i].hitbox.y = inimigos[i].y
+    end
+    if collide_count[1] == 0 then
+        inimigos[i].x = inimigos[i].x + math.cos(angle) * inimigos[i].spd
+    end
+    if collide_count[2] == 0 then
+        inimigos[i].y = inimigos[i].y + math.sin(angle) * inimigos[i].spd
+    end
+    inimigos[i].angle = angle
+end
+
+function enemyRoam(i)
+    local collide_count = {0,0}
+    if math.abs(inimigos[i].x - inimigos[i].roamPos.x) < 3 and math.abs(inimigos[i].y - inimigos[i].roamPos.y) < 3 then
+        return
+    end
+    local angle = angleToPoint(inimigos[i].x, inimigos[i].y, inimigos[i].roamPos.x, inimigos[i].roamPos.y)
+    for _ = 1, #walls do
+        inimigos[i].hitbox.x = inimigos[i].x + math.cos(angle) * math.min(inimigos[i].spd, 6)
+        if collides(inimigos[i].hitbox, walls[_]) then
+            collide_count[1] = collide_count[1] + 1
+        end
+        inimigos[i].hitbox.x = inimigos[i].x
+
+        inimigos[i].hitbox.y = inimigos[i].y + math.sin(angle) * math.min(inimigos[i].spd, 6)
+        if collides(inimigos[i].hitbox, walls[_]) then
+            collide_count[2] = collide_count[2] + 1
+        end
+        inimigos[i].hitbox.y = inimigos[i].y
+    end
+    if collide_count[1] == 0 then
+        inimigos[i].x = inimigos[i].x + math.cos(angle) * math.min(inimigos[i].spd, 6)
+    end
+    if collide_count[2] == 0 then
+        inimigos[i].y = inimigos[i].y + math.sin(angle) * math.min(inimigos[i].spd, 6)
+    end
     inimigos[i].angle = angle
 end
 
@@ -316,11 +470,6 @@ function dist(x1, y1, x2, y2)
     return math.sqrt((x1-x2)^2 + (y1-y2)^2)
 end
 
--- MARK: Create new enemy
-function createEnemy(xis,yps)
-    return {x = xis, y = yps, spd = 2, vida = 2, morto = false, cego = false, flashTime = 0, frame = 1, anims = {}}
-end
-
 -- MARK: Collision
 function collides(circle, line)
     local rect = lineToRect(line)
@@ -356,7 +505,7 @@ function iniciarWave(wave)
         local var = math.random(2)
         inimigos[i] = createEnemy(3000,0)
         inimigos[i].anims[1] = newAnim("assets/sprites/enemy" .. var .. "/walk", 5) -- Animação de andar
-        inimigos[i].anims[2] = newAnim("assets/sprites/enemy".. var .."/enemy-death", 1, false) -- Animação de morte
+        inimigos[i].anims[2] = newAnim("assets/sprites/enemy".. var .."/enemy-death", 2, false) -- Animação de morte
         -- inimigos[i].anims[2] = newAnim ("assets/sprites/enemy/death", 5)
     end
     -- Aumenta o tamanho das paredes a partir da wave 5
@@ -366,7 +515,10 @@ function iniciarWave(wave)
     else
         wallSize = 800 * 1.2
     end
-
+    for i = 1, #tiros do
+        resetTiro(tiros[i])
+    end
+    posx, posy = 250, 250
     layout = chooseLayout(math.random(3))
     walls = layout.walls
     spawnPoints = layout.points
@@ -376,17 +528,18 @@ end
 -- Função para verificar se a wave foi completada
 function verificarWaveCompleta()
     if inimigosVivos <= 0 then
-        currentWave = currentWave + 1
-        spdEnemy = spdEnemy + 0.5 -- Aumenta a velocidade a cada wave
-        iniciarWave(currentWave)
-        waveTime = 0
+        inTransition = true
+        transition = tween.new(1,prop, {fadeColor = {0,0,0,1}})
     end
 end
 
+-- MARK: Create new enemy
+
 function createEnemy(x,y)
-    return {x = x, y = y, spd = spdEnemy, frame = 1, angle = 0, vida = 3, morto = false, flashTime = 0, cego = false, anims = {}}
+    return {x = x, y = y, spd = spdEnemy, frame = 1, angle = 0, vida = 3, morto = false, flashTime = 0, cego = false, anims = {},  roamTime = 0, roamPos={x = 0, y = 0}, hitbox = {x = x, y = y, r = 20}}
 end
 
+-- MARK: - Não sei
 function clamp(a, min, max)
     if a < min then
         return min
@@ -396,6 +549,7 @@ function clamp(a, min, max)
     end
     return a
 end
+
 -- MARK: Room configs
 function chooseLayout(i)
     local layout = {walls = {createLine(0, 0, wallSize, 0), 
@@ -444,6 +598,11 @@ function spawnEnemies(dt)
             ponto = spawnPoints[math.random(#spawnPoints)]
             inimigos[i].x = ponto[1] + math.random(-20, 20)
             inimigos[i].y = ponto[2] + math.random(-20, 20)
+            inimigos[i].roamPos.x = inimigos[i].x
+            inimigos[i].roamPos.y = inimigos[i].y
+            inimigos[i].hitbox.x = inimigos[i].x
+            inimigos[i].hitbox.y = inimigos[i].y
+
         end
         spawnedCount = spawnedCount + groupSize
     end
@@ -469,4 +628,17 @@ function controlsView()
     if love.keyboard.isDown("d") then
         love.graphics.draw(teclaD, 1100, 130, 0, 2, 2)
     end
+end
+
+-- MARK: - Inicia jogo
+function newGame()
+    for i = 1, #tiros do
+        resetTiro(tiros[i])
+    end
+    currentWave = 1
+    spdEnemy = 2
+    iniciarWave(currentWave)
+    posx, posy = 200, 200
+    player.vida = 5
+    gameover = false
 end
