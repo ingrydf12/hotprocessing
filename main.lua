@@ -54,7 +54,8 @@ function love.load()
     -- Carrega animação de andar do player
     player.anims[1] = newAnim("assets/sprites/player", 5)
 
-    --chao = love.graphics.newImage("assets/sprites/floor/chao.png")
+    chao = love.graphics.newImage("assets/sprites/floor/floor1.png")
+    gameOverImg = love.graphics.newImage ("assets/sprites/gameOverScreen/gameOverTitle.png")
 
     -- Inicializa o array de tiros
     tiros = {}
@@ -198,19 +199,35 @@ function love.draw()
     
     if inMenu then
         menu.draw()
-        -- EXCLUI ESSE LIXO!!! [[
-        if mouseX>479 and mouseX<600 and mouseY>548 and mouseY<650 then
+        local mouseX, mouseY = love.mouse.getPosition()
+    
+        -- Verifica se o mouse está sobre o botão de play
+        if mouseX > menu.playButtonX and mouseX < (menu.playButtonX + menu.playButtonImage:getWidth() * menu.buttonScale) and 
+           mouseY > menu.playButtonY and mouseY < (menu.playButtonY + menu.playButtonImage:getHeight() * menu.buttonScale) then
             menu.playButtonImage = menu.hover
         else
             menu.playButtonImage = love.graphics.newImage("assets/sprites/buttons/play_button_1.png")
         end
-        --]]!!
+        
         return
     end
-
+    
+-- Setei o gameOverTile aqui, variavel no love.draw = gameOverImg
     if gameover then
-        love.graphics.print("tela de gameover aqui", 500,400)
-        love.graphics.print("press 'r' to restart", 515, 450)
+        -- GameOverTitle (aumentar com escala)
+        local GOWidth = gameOverImg:getWidth()
+        local GOHeight = gameOverImg:getHeight()
+        local x = (1200 - GOWidth) / 2
+        local y = (800 - GOHeight) / 2
+        -- Text
+        local text = "Press 'r' to restart"
+        local textWidth = font:getWidth(text)
+        local textHeight = font:getHeight(text)
+        local textX = (1200 - textWidth) / 2
+        local textY = (800 - textHeight) / 2 + GOHeight / 2 + 20
+
+        love.graphics.draw(gameOverImg, x, y)
+        love.graphics.print(text, textX, textY)
         return
     end
     
@@ -218,6 +235,12 @@ function love.draw()
     love.graphics.translate(-posx+600, -posy+400)
 
     love.graphics.setColor(white)
+    
+    for x = 0, wallSize, chao:getWidth() * floorScale do
+        for y = 0, wallSize, chao:getHeight() * floorScale do
+            love.graphics.draw(chao, x, y, 0, floorScale, floorScale)
+        end
+    end
     
     -- Paredes (só pra saber onde estão enquanto não tem sprite)
     for i = 1, #walls do
@@ -259,27 +282,6 @@ function love.draw()
     local frame = getFrame(player.anims[1])
     love.graphics.draw(frame, posx, posy, angleToPoint(600, 400, mouseX, mouseY)+math.pi/2, 1, 1, frame:getWidth()/2, frame:getHeight()/2)
     love.graphics.pop()
-
-    -- MARK: Draw UI
-    -- Desenha UI mostrando os controles usados pelo player
-    -- nao recomendo usar função que carrega arquivo no draw(), de preferencia carrega logo no global e só usa o draw pra desenhar
-    local teclaW = love.graphics.newImage("assets/sprites/teclas/teclaw.png")
-    local teclaA = love.graphics.newImage("assets/sprites/teclas/teclaa.png")
-    local teclaS = love.graphics.newImage("assets/sprites/teclas/teclas.png")
-    local teclaD = love.graphics.newImage("assets/sprites/teclas/teclad.png")
-
-    if love.keyboard.isDown("w") then
-        love.graphics.draw(teclaW, 1100, 40,0,2,2)
-    end
-    if love.keyboard.isDown("a") then
-        love.graphics.draw(teclaA, 1100, 70,0,2,2)
-    end
-    if love.keyboard.isDown("s") then
-        love.graphics.draw(teclaS, 1100, 100,0,2,2)
-    end
-    if love.keyboard.isDown("d") then
-        love.graphics.draw(teclaD, 1100, 130,0,2,2)
-    end
 
     -- Crosshair
     love.graphics.line(mouseX - 20, mouseY, mouseX + 20, mouseY)
