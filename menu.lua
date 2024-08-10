@@ -60,7 +60,7 @@ end
 -- Função de carregamento inicial
 function menu.load()
     loadImages()
-    --musicSt()
+    musicSt() -- Falta setar pra parar após sair do menu
     setupWindowAndButtons()
 end
 
@@ -68,11 +68,6 @@ end
 -- MARK: - UP Wave Effect and Music Verification
 function menu.update(dt)
     menu.time = menu.time + dt
-
-    if not inMenu and menu.music then
-        menu.music:stop()
-        menu.music = nil  -- Opcional: Limpar a referência após parar a música
-    end
 end
 
 -- MARK: - Draw

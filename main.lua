@@ -27,6 +27,7 @@ local gameover = false
 local inMenu = true
 local inTransition = false
 local prop = {fadeColor = {0,0,0,0}}
+
 -- MARK: LOVE LOAD
 function love.load()
     -- UI/UX
@@ -55,7 +56,7 @@ function love.load()
     player.anims[1] = newAnim("assets/sprites/player", 5)
 
     chao = love.graphics.newImage("assets/sprites/floor/floor1.png")
-    gameOverImg = love.graphics.newImage ("assets/sprites/gameOverScreen/gameOverTitle.png")
+    gameOverImg = love.graphics.newImage ("assets/sprites/gameOverScreen/gameOverTitle.png") -- Load gameOverTitle
 
     -- Inicializa o array de tiros
     tiros = {}
@@ -90,6 +91,10 @@ function love.update(dt)
         --botar os checks da tela de gameover aqui (reiniciar com a tecla 'r' sei la)
         if love.keyboard.isDown("r") then
             newGame()
+        end
+        -- voltar pro menu
+        if love.keyboard.isDown("b") then
+            inMenu = true
         end
         return
     end
@@ -228,8 +233,15 @@ function love.draw()
         local textX = (1200 - textWidth) / 2
         local textY = (800 - textHeight) / 2 + GOHeight / 2 + 20
 
+        local text2 = "Press 'b' to back to menu"
+        local text2Width = font:getWidth(text2)
+        local text2Height = font:getHeight(text2)
+        local text2X = (1200 - text2Width) / 2
+        local text2Y = (800 - text2Height) / 2 + GOHeight / 2 + 50
+
         love.graphics.draw(gameOverImg, x, y)
-        love.graphics.print(text, textX, textY)
+        love.graphics.print(text, textX, textsY)
+        love.graphics.print(text2, text2X, text2Y)
         return
     end
     
@@ -520,11 +532,14 @@ function verificarWaveCompleta()
         transition = tween.new(1,prop, {fadeColor = {0,0,0,1}})
     end
 end
+
 -- MARK: Create new enemy
+
 function createEnemy(x,y)
     return {x = x, y = y, spd = spdEnemy, frame = 1, angle = 0, vida = 3, morto = false, flashTime = 0, cego = false, anims = {},  roamTime = 0, roamPos={x = 0, y = 0}, hitbox = {x = x, y = y, r = 20}}
 end
 
+-- MARK: - Não sei
 function clamp(a, min, max)
     if a < min then
         return min
@@ -594,6 +609,7 @@ function spawnEnemies(dt)
     end
 end
 
+-- MARK: - Inicia jogo
 function newGame()
     for i = 1, #tiros do
         resetTiro(tiros[i])
