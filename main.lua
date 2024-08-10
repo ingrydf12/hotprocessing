@@ -51,6 +51,7 @@ function love.load()
     player.anims[1] = newAnim("assets/sprites/player", 5)
 
     chao = love.graphics.newImage("assets/sprites/floor/floor1.png")
+    gameOverImg = love.graphics.newImage ("assets/sprites/gameOverScreen/gameOverTitle.png")
 
     -- Inicializa o array de tiros
     tiros = {}
@@ -181,10 +182,22 @@ function love.draw()
         return
     end
     
-
+-- Setei o gameOverTile aqui, variavel no love.draw = gameOverImg
     if gameover then
-        love.graphics.print("tela de gameover aqui", 500,400)
-        love.graphics.print("press 'r' to restart", 515, 450)
+        -- GameOverTitle (aumentar com escala)
+        local GOWidth = gameOverImg:getWidth()
+        local GOHeight = gameOverImg:getHeight()
+        local x = (1200 - GOWidth) / 2
+        local y = (800 - GOHeight) / 2
+        -- Text
+        local text = "Press 'r' to restart"
+        local textWidth = font:getWidth(text)
+        local textHeight = font:getHeight(text)
+        local textX = (1200 - textWidth) / 2
+        local textY = (800 - textHeight) / 2 + GOHeight / 2 + 20
+
+        love.graphics.draw(gameOverImg, x, y)
+        love.graphics.print(text, textX, textY)
         return
     end
     
