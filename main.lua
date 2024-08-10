@@ -53,6 +53,7 @@ function love.load()
 
     chao = love.graphics.newImage("assets/sprites/floor/floor1.png")
     gameOverImg = love.graphics.newImage ("assets/sprites/gameOverScreen/gameOverTitle.png") -- Load gameOverTitle
+    bulletImage = love.graphics.newImage("assets/items/bullet.png")
 
     -- Inicializa o array de tiros
     tiros = {}
@@ -230,11 +231,10 @@ function love.draw()
         love.graphics.line(walls[i])
     end
 
-    -- Draw tiros
+    -- Draw tiros (bulletImage)
     for i = 1, LIMITE do
         local tiro = tiros[i]
-        love.graphics.setColor(red)
-        love.graphics.rectangle("fill", tiro.x, tiro.y, 10, 20)
+        love.graphics.draw(bulletImage, tiro.x, tiro.y, 270, 0.8,0.8)
     end
     
     -- MARK: - "Knockback" effect on enemys
