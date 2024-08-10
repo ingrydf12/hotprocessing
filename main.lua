@@ -6,7 +6,7 @@ local red = {0.7, 0, 0} -- Tiro
 local white = {1,1,1}
 local black = {0,0,0}
 
-local player = {frame = 1, anims = {}, hitbox = {x = posx, y = posy, r = 20}, vida = 5, iTime = 0}
+local player = {frame = 1, anims = {}, hitbox = {x = posx, y = posy, r = 20}, vida = 5, iTime = 0, angle = 0}
 --local camera = {x = posx, y = posy}
 local inimigos = {}
 local walls = {}
@@ -194,7 +194,9 @@ end
 function love.draw()
     local mouseX = love.mouse.getX()
     local mouseY = love.mouse.getY()
-
+    if not inTransition then
+        player.angle = angleToPoint(600, 400, mouseX, mouseY)+math.pi/2
+    end
     love.graphics.clear(0, 0, 0, 1)
     
     if inMenu then
@@ -212,7 +214,7 @@ function love.draw()
         return
     end
     
--- Setei o gameOverTile aqui, variavel no love.draw = gameOverImg
+-- Setei o gameOverTitle aqui, variavel no love.draw = gameOverImg
     if gameover then
         -- GameOverTitle (aumentar com escala)
         local GOWidth = gameOverImg:getWidth()
@@ -280,7 +282,7 @@ function love.draw()
     -- Draw player
     love.graphics.setColor(white)
     local frame = getFrame(player.anims[1])
-    love.graphics.draw(frame, posx, posy, angleToPoint(600, 400, mouseX, mouseY)+math.pi/2, 1, 1, frame:getWidth()/2, frame:getHeight()/2)
+    love.graphics.draw(frame, posx, posy, player.angle, 1, 1, frame:getWidth()/2, frame:getHeight()/2)
     love.graphics.pop()
 
     -- Crosshair
@@ -597,6 +599,7 @@ function newGame()
         resetTiro(tiros[i])
     end
     currentWave = 1
+    spdEnemy = 2
     iniciarWave(currentWave)
     posx, posy = 200, 200
     player.vida = 5
