@@ -30,7 +30,7 @@ local function setupWindowAndButtons()
     local buttonH = menu.creditsButtonImage:getHeight() * menu.buttonScale
 
     menu.playButtonX = 1200/2 - (buttonWidth / 2)
-    menu.playButtonY = 800/2 - (buttonHeight / 2) + 150 
+    menu.playButtonY = 800/2 - (buttonHeight / 2) + 150
     menu.creditsButtonX = 1200/2 - (buttonW / 2)
     menu.creditsButtonY = 800 /2 - (buttonH /2) + 250
 end
