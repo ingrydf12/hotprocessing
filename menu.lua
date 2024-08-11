@@ -30,9 +30,9 @@ local function setupWindowAndButtons()
     local buttonH = menu.creditsButtonImage:getHeight() * menu.buttonScale
 
     menu.playButtonX = 1200/2 - (buttonWidth / 2)
-    menu.playButtonY = 800/2 - (buttonHeight / 2)
+    menu.playButtonY = 800/2 - (buttonHeight / 2) + 150
     menu.creditsButtonX = 1200/2 - (buttonW / 2)
-    menu.creditsButtonY = 800 /2 - (buttonH /2)
+    menu.creditsButtonY = 800 /2 - (buttonH /2) + 250
 end
 
 -- Função para calcular o efeito de onda
@@ -76,8 +76,8 @@ function menu.draw()
 
     -- Desenhar botões com escala e centralização
     love.graphics.setColor(1, 1, 1)
-    love.graphics.draw(menu.playButtonImage, menu.playButtonX, menu.playButtonY, 0, menu.buttonScale, menu.buttonScale, menu.playButtonImage:getWidth() / 2 - 100, menu.playButtonImage:getHeight() / 2 - 150)
-    love.graphics.draw(menu.creditsButtonImage, menu.creditsButtonX, menu.creditsButtonY, 0, menu.buttonScale, menu.buttonScale, menu.creditsButtonImage:getWidth() / 2 - 100, menu.creditsButtonImage:getHeight() / 2 - 250)
+    love.graphics.draw(menu.playButtonImage, menu.playButtonX, menu.playButtonY, 0, menu.buttonScale, menu.buttonScale, 0, 0)
+    love.graphics.draw(menu.creditsButtonImage, menu.creditsButtonX, menu.creditsButtonY, 0, menu.buttonScale, menu.buttonScale, 0, 0)
 
     end
 return menu

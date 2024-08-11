@@ -24,7 +24,6 @@ local groupSize = 3 --quantidade de inimigos por spawn
 local waveTime = 0 --tempo na wave, atualizado automaticamente
 
 local gameover = false
-local inMenu = true
 local inTransition = false
 local prop = {fadeColor = {0,0,0,0}}
 
@@ -34,6 +33,13 @@ local shakeMagnitude = 5 -- Intensidade do shake
 local shakeTime = 0 ]]
 
 
+local screen = 1
+--[[
+tela 1 = tela inicial
+tela 2 = tela de creditos 
+tela 3 = loop principal do jogo; fase, inimigos, controlar o player
+vou deixar a tela da gameover do jeito que tava msm
+]]
 -- MARK: LOVE LOAD
 function love.load()
     -- UI/UX
@@ -68,7 +74,7 @@ function love.load()
     -- Inicializa o array de tiros
     tiros = {}
     for i = 1, LIMITE do
-        tiros[i] = {x = -1500, y = -1500, velx = 0, vely = 0}
+        tiros[i] = {x = -1500, y = -1500, velx = 0, vely = 0, angle = 0}
     end
 
 end
@@ -89,8 +95,15 @@ function love.update(dt)
         prop.fadeColor = {0,0,0,0}
     end
 
-    if inMenu then
+    if screen == 1 then
         menu.update(dt)
+        return
+    end
+
+    if screen == 2 then
+        if love.keyboard.isDown("b") then
+            screen = 1
+        end
         return
     end
 
@@ -101,7 +114,7 @@ function love.update(dt)
         end
         -- voltar pro menu
         if love.keyboard.isDown("b") then
-            inMenu = true
+            screen = 1
         end
         return
     end
@@ -121,9 +134,9 @@ function love.update(dt)
     end
 
     
-    if love.keyboard.isDown("k") then
+    --[[if love.keyboard.isDown("k") then
         inimigosVivos = 0
-    end
+    end]]
 
     PlayerUpdate(dir, dt)
     
@@ -211,25 +224,31 @@ function love.draw()
     end
     love.graphics.clear(0, 0, 0, 1)
     
-    if inMenu then
+    if screen == 1 then
         menu.draw()
         local mouseX, mouseY = love.mouse.getPosition()
     
         -- Verifica se o mouse está sobre o botão de play
-        if mouseX > menu.playButtonX and mouseX < (menu.playButtonX + menu.playButtonImage:getWidth() * menu.buttonScale+ 100) and 
-           mouseY > menu.playButtonY and mouseY < (menu.playButtonY + menu.playButtonImage:getHeight() * menu.buttonScale + 150) then
+        if mouseX > menu.playButtonX and mouseX < (menu.playButtonX + menu.playButtonImage:getWidth() * menu.buttonScale) and 
+           mouseY > menu.playButtonY and mouseY < (menu.playButtonY + menu.playButtonImage:getHeight() * menu.buttonScale) then
             menu.playButtonImage = menu.hover
         else
             menu.playButtonImage = love.graphics.newImage("assets/sprites/buttons/play_button_1.png")
         end
         -- Botão de credits
-        if mouseX > menu.creditsButtonX and mouseX < (menu.creditsButtonX + menu.creditsButtonImage:getWidth() * menu.buttonScale+100) and 
-           mouseY > menu.creditsButtonY and mouseY < (menu.creditsButtonY + menu.creditsButtonImage:getHeight() * menu.buttonScale + 250) then
+        if mouseX > menu.creditsButtonX and mouseX < (menu.creditsButtonX + menu.creditsButtonImage:getWidth() * menu.buttonScale) and 
+           mouseY > menu.creditsButtonY and mouseY < (menu.creditsButtonY + menu.creditsButtonImage:getHeight() * menu.buttonScale) then
             menu.creditsButtonImage = menu.creditsHover
         else
             menu.creditsButtonImage = love.graphics.newImage("assets/sprites/buttons/button-credits.png")
         end
         
+        return
+    end
+
+    if screen == 2 then 
+        -- MARK: CRÉDITOS
+        love.graphics.draw(love.graphics.newImage("assets/finalScreen/creditsscreen.png"), 0, 0)
         return
     end
     
@@ -270,6 +289,11 @@ function love.draw()
             love.graphics.draw(chao, x, y, 0, floorScale, floorScale)
         end
     end
+    love.graphics.setColor(black)
+    love.graphics.rectangle("fill",wallSize,0,wallSize+50,wallSize)
+    love.graphics.rectangle("fill",0,wallSize,wallSize+100,wallSize+50)
+    
+    love.graphics.setColor(white)
     
     -- Paredes (só pra saber onde estão enquanto não tem sprite)
     for i = 1, #walls do
@@ -279,7 +303,7 @@ function love.draw()
     -- Draw tiros (bulletImage)
     for i = 1, LIMITE do
         local tiro = tiros[i]
-        love.graphics.draw(bulletImage, tiro.x, tiro.y, 270, 0.8,0.8)
+        love.graphics.draw(bulletImage, tiro.x, tiro.y, tiro.angle, 0.8,0.8)
     end
     
     -- MARK: - "Knockback" effect on enemys
@@ -317,19 +341,21 @@ function love.draw()
     
     -- Info
     counter()
-    love.graphics.print(player.vida .. " HP", 580, 450)
+    love.graphics.print(player.vida .. " HP", 580, 345)
     if inTransition then
         love.graphics.setColor(prop.fadeColor)
         love.graphics.rectangle("fill", 0,0,1200,800)
-        return
     end
 end
 
 function love.mousepressed(x, y, button, istouch, presses)
-    if inMenu then
-        if x>479 and x<600 and y>548 and y<650 then -- MARK: - AJEITAR
-            inMenu = false
+    if screen == 1 then
+        if x > menu.playButtonX and x < (menu.playButtonX + menu.playButtonImage:getWidth() * menu.buttonScale) and 
+           y > menu.playButtonY and y < (menu.playButtonY + menu.playButtonImage:getHeight() * menu.buttonScale) then
             newGame()
+        elseif x > menu.creditsButtonX and x < (menu.creditsButtonX + menu.creditsButtonImage:getWidth() * menu.buttonScale) and 
+            y > menu.creditsButtonY and y < (menu.creditsButtonY + menu.creditsButtonImage:getHeight() * menu.buttonScale) then
+            screen = 2
         end
         return
     end
@@ -341,6 +367,7 @@ function love.mousepressed(x, y, button, istouch, presses)
         end
 
         local angle = angleToPoint(600, 400, x, y)
+        tiros[tiro_atual].angle = angle
         tiros[tiro_atual].x = posx
         tiros[tiro_atual].y = posy
         tiros[tiro_atual].velx = spdTiro * 2 * math.cos(angle)
@@ -553,17 +580,6 @@ function createEnemy(x,y)
     return {x = x, y = y, spd = spdEnemy, frame = 1, angle = 0, vida = 3, morto = false, flashTime = 0, cego = false, anims = {},  roamTime = 0, roamPos={x = 0, y = 0}, hitbox = {x = x, y = y, r = 20}}
 end
 
--- MARK: - Não sei
-function clamp(a, min, max)
-    if a < min then
-        return min
-    end
-    if a > max then
-        return max
-    end
-    return a
-end
-
 -- MARK: Room configs
 function chooseLayout(i)
     local layout = {walls = {createLine(0, 0, wallSize, 0), 
@@ -646,9 +662,11 @@ end
 
 -- MARK: - Inicia jogo
 function newGame()
+    screen = 3
     for i = 1, #tiros do
         resetTiro(tiros[i])
     end
+    waveTime = 0
     currentWave = 1
     spdEnemy = 2
     iniciarWave(currentWave)
