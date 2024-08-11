@@ -41,7 +41,7 @@ local function getWaveOffset()
 end
 
 local function musicSt()
-    menu.music = love.audio.newSource("assets/sfx/autoral-menuloop.wav", "stream")
+    menu.music = love.audio.newSource("assets/sounds/autoral-baseMusicMenuFix.ogg", "stream")
 
     menu.music:setVolume(0.5)
     menu.music:setLooping(true)

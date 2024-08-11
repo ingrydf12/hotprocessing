@@ -6,7 +6,7 @@ local red = {0.7, 0, 0} -- Tiro
 local white = {1,1,1}
 local black = {0,0,0}
 
-local player = {frame = 1, anims = {}, hitbox = {x = posx, y = posy, r = 20}, vida = 5, iTime = 0, angle = 0}
+local player = {frame = 1, anims = {}, hitbox = {x = posx, y = posy, r = 20}, vida = 5, iTime = 0, angle = 0, flashTime = 0}
 --local camera = {x = posx, y = posy}
 local inimigos = {}
 local walls = {}
@@ -25,6 +25,7 @@ local waveTime = 0 --tempo na wave, atualizado automaticamente
 
 local gameover = false
 local inTransition = false
+local sfxWin
 local prop = {fadeColor = {0,0,0,0}}
 
 --[[ -- Shake effect
@@ -38,6 +39,7 @@ local screen = 1
 tela 1 = tela inicial
 tela 2 = tela de creditos 
 tela 3 = loop principal do jogo; fase, inimigos, controlar o player
+tela 4 = tela de pauseGame
 vou deixar a tela da gameover do jeito que tava msm
 ]]
 -- MARK: LOVE LOAD
@@ -71,6 +73,7 @@ function love.load()
     gameOverImg = love.graphics.newImage ("assets/sprites/gameOverScreen/gameOverTitle.png") -- Load gameOverTitle
     bulletImage = love.graphics.newImage("assets/items/bullet.png")
 
+
     -- Inicializa o array de tiros
     tiros = {}
     for i = 1, LIMITE do
@@ -101,11 +104,27 @@ function love.update(dt)
     end
 
     if screen == 2 then
-        if love.keyboard.isDown("b") then
+        if love.keyboard.isDown("m") then
             screen = 1
         end
         return
     end
+
+    -- Tela de pauseGame
+    if screen == 3 then
+        if love.keyboard.isDown("escape") then
+            screen = 4 -- Vai para a tela de pausa
+        end
+    elseif screen == 4 then
+        if love.keyboard.isDown("b") then
+            screen = 3 -- Volta pro jogo
+        end
+        if love.keyboard.isDown("m") then
+            screen = 1 -- Volta para o menu
+        end
+        return -- Faz com que não atualize o game enquanto estiver na tela de pause
+    end
+
 
     if gameover then
         --botar os checks da tela de gameover aqui (reiniciar com a tecla 'r' sei la)
@@ -139,6 +158,16 @@ function love.update(dt)
     end]]
 
     PlayerUpdate(dir, dt)
+
+    -- Atualiza o estado de "flashTime" do player e inimigos
+    if player.flashTime > 0 then
+        player.flashTime = player.flashTime - dt
+    end
+    for i = 1, #inimigos do
+        if inimigos[i].flashTime > 0 then
+            inimigos[i].flashTime = inimigos[i].flashTime - dt
+        end
+    end
     
     -- Atualiza tiros e verifica o estado dos inimigos
     for i = 1, LIMITE do
@@ -247,8 +276,14 @@ function love.draw()
     end
 
     if screen == 2 then 
-        -- MARK: CRÉDITOS
+        -- MARK: Credits Screen
         love.graphics.draw(love.graphics.newImage("assets/finalScreen/creditsscreen.png"), 0, 0)
+        return
+    end
+
+    -- MARK: - PauseScreen
+    if screen == 4 then 
+        love.graphics.draw(love.graphics.newImage("assets/menuDefault/pauseScreen.png"), 0, 0)
         return
     end
     
@@ -282,7 +317,12 @@ function love.draw()
     love.graphics.push()
     love.graphics.translate(-posx+600, -posy+400)
 
-    love.graphics.setColor(white)
+    -- Flash Player
+    if player.flashTime > 0 then
+        love.graphics.setColor(1, 0, 0) -- Vermelho
+    else
+        love.graphics.setColor(1, 1, 1) -- Branco
+    end
     
     for x = 0, wallSize, chao:getWidth() * floorScale do
         for y = 0, wallSize, chao:getHeight() * floorScale do
@@ -566,10 +606,13 @@ function iniciarWave(wave)
     spawnedCount = 0
 end
 
--- Função para verificar se a wave foi completada
+-- MARK: - Next Wave
 function verificarWaveCompleta()
     if inimigosVivos <= 0 then
         inTransition = true
+        sfxWin = love.audio.newSource("assets/sfx/sfx-WinBasic.wav", "stream")
+        sfxWin:setVolume(0.2)
+        sfxWin:play()
         transition = tween.new(1,prop, {fadeColor = {0,0,0,1}})
     end
 end
