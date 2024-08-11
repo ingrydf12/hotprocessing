@@ -210,11 +210,18 @@ function love.draw()
         local mouseX, mouseY = love.mouse.getPosition()
     
         -- Verifica se o mouse está sobre o botão de play
-        if mouseX > menu.playButtonX and mouseX < (menu.playButtonX + menu.playButtonImage:getWidth() * menu.buttonScale) and 
-           mouseY > menu.playButtonY and mouseY < (menu.playButtonY + menu.playButtonImage:getHeight() * menu.buttonScale) then
+        if mouseX > menu.playButtonX and mouseX < (menu.playButtonX + menu.playButtonImage:getWidth() * menu.buttonScale+ 100) and 
+           mouseY > menu.playButtonY and mouseY < (menu.playButtonY + menu.playButtonImage:getHeight() * menu.buttonScale + 150) then
             menu.playButtonImage = menu.hover
         else
             menu.playButtonImage = love.graphics.newImage("assets/sprites/buttons/play_button_1.png")
+        end
+        -- Botão de credits
+        if mouseX > menu.creditsButtonX and mouseX < (menu.creditsButtonX + menu.creditsButtonImage:getWidth() * menu.buttonScale+100) and 
+           mouseY > menu.creditsButtonY and mouseY < (menu.creditsButtonY + menu.creditsButtonImage:getHeight() * menu.buttonScale + 250) then
+            menu.creditsButtonImage = menu.creditsHover
+        else
+            menu.creditsButtonImage = love.graphics.newImage("assets/sprites/buttons/button-credits.png")
         end
         
         return
@@ -313,7 +320,7 @@ end
 
 function love.mousepressed(x, y, button, istouch, presses)
     if inMenu then
-        if x>479 and x<600 and y>548 and y<650 then
+        if x>479 and x<600 and y>548 and y<650 then -- MARK: - AJEITAR
             inMenu = false
             newGame()
         end

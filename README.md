@@ -22,13 +22,17 @@ O jogador é controlado usando o teclado e a direção dos tiros acompanha o mou
 
 <img src="documentation/ingryd-gdc.png">
 
-<h3> Como jogar no meu navegador?</h3>
+<h3> Como jogar?</h3>
+Pode ser jogado pelo navegador na página do itch.io ou executável (macOS e Windows).
 
+<h4>PELO NAVEGADOR </h4>
 Clique nesse <a href="">link</a> para ser direcionado ao site contendo o Hotline ISMD.
 
+<h4>EXECUTÁVEL</h4>
+Clique para baixar o executável Windows.
 
 
-<h3 align=center>Suport </h3>
+<h3 align=left>Suport </h3>
 
 ![badge](https://github.com/ingrydf12/arquivosprocessing/blob/main/support.png?raw=true)
 </div>
