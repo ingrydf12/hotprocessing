@@ -263,6 +263,11 @@ function love.draw()
             love.graphics.draw(chao, x, y, 0, floorScale, floorScale)
         end
     end
+    love.graphics.setColor(black)
+    love.graphics.rectangle("fill",wallSize,0,wallSize+50,wallSize)
+    love.graphics.rectangle("fill",0,wallSize,wallSize+100,wallSize+50)
+    
+    love.graphics.setColor(white)
     
     -- Paredes (só pra saber onde estão enquanto não tem sprite)
     for i = 1, #walls do
@@ -310,11 +315,10 @@ function love.draw()
     
     -- Info
     counter()
-    love.graphics.print(player.vida .. " HP", 580, 450)
+    love.graphics.print(player.vida .. " HP", 580, 345)
     if inTransition then
         love.graphics.setColor(prop.fadeColor)
         love.graphics.rectangle("fill", 0,0,1200,800)
-        return
     end
 end
 
@@ -547,17 +551,6 @@ end
 
 function createEnemy(x,y)
     return {x = x, y = y, spd = spdEnemy, frame = 1, angle = 0, vida = 3, morto = false, flashTime = 0, cego = false, anims = {},  roamTime = 0, roamPos={x = 0, y = 0}, hitbox = {x = x, y = y, r = 20}}
-end
-
--- MARK: - Não sei
-function clamp(a, min, max)
-    if a < min then
-        return min
-    end
-    if a > max then
-        return max
-    end
-    return a
 end
 
 -- MARK: Room configs
