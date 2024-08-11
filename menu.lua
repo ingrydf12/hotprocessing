@@ -4,7 +4,7 @@ local menu = {titleImage, backgroundImage, playButtonImage, creditsButtonImage, 
 time = 0, 
 waveAmplitude = 10,
 waveFrequency = 2,
-titleScale = 3,
+titleScale = 1.4,
 buttonScale = 1.2,
 playButtonX, playButtonY, creditsButtonX, creditsButtonY, music}
 
