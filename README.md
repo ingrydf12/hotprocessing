@@ -1,5 +1,6 @@
 <h1> Hotline ISMD </h1>
 <p>Jogo desenvolvido no framework LOVE2D para trabalho da disciplina de Introdução a Sistemas e Mídias Digitais na UFC. </p>
+<p> <b>Game Status: Complete. New features may occur </b></p>
 
 <h2> Equipe </h2>
 
@@ -22,14 +23,15 @@ O jogador é controlado usando o teclado e a direção dos tiros acompanha o mou
 
 <img src="documentation/ingryd-gdc.png">
 
-<h3> Como jogar?</h3>
-Pode ser jogado pelo navegador na página do itch.io ou executável (macOS e Windows).
+<h3><b>Todos os itens, sprites, sound effects, ícones e soundtracks foram feitos por nós. </b></h3>
+<h2> Como jogar?</h2>
+Pode ser jogado pelo navegador na página do itch.io ou executável (Windows).
 
 <h4>PELO NAVEGADOR </h4>
-Clique nesse <a href="">link</a> para ser direcionado ao site contendo o Hotline ISMD.
+Clique nesse <a href="https://neetww.itch.io/hotline-ismd">link</a> para ser direcionado ao site do ITCH.io contendo o Hotline ISMD.
 
 <h4>EXECUTÁVEL</h4>
-Clique para baixar o executável Windows.
+Clique <a href="https://neetw.itch.io/hotline-ismd">aqui<a> para baixar o executável Windows.
 
 
 <h3 align=left>Suport </h3>
