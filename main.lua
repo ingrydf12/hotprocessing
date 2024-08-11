@@ -379,9 +379,20 @@ function love.draw()
     love.graphics.line(mouseX - 20, mouseY, mouseX + 20, mouseY)
     love.graphics.line(mouseX, mouseY - 18, mouseX, mouseY + 18)
     
-    -- Info
+    -- Info Player (HP)
     counter()
-    love.graphics.print(player.vida .. " HP", 580, 345)
+    local heartWidth = playerHeart:getWidth()
+    local startX = 10
+    local startY = 50
+    for i = 1, player.vida do
+        local heartImage
+        if player.vida == 1 and i == player.vida then
+            heartImage = playerLastHeart
+        else
+            heartImage = playerHeart
+        end
+        love.graphics.draw(heartImage, startX + (i - 1) * (heartWidth + 5), startY)
+    end
     if inTransition then
         love.graphics.setColor(prop.fadeColor)
         love.graphics.rectangle("fill", 0,0,1200,800)
