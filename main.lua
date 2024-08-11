@@ -24,7 +24,6 @@ local groupSize = 3 --quantidade de inimigos por spawn
 local waveTime = 0 --tempo na wave, atualizado automaticamente
 
 local gameover = false
-local inMenu = true
 local inTransition = false
 local prop = {fadeColor = {0,0,0,0}}
 
@@ -34,6 +33,13 @@ local shakeMagnitude = 5 -- Intensidade do shake
 local shakeTime = 0 ]]
 
 
+local screen = 1
+--[[
+tela 1 = tela inicial
+tela 2 = tela de creditos 
+tela 3 = loop principal do jogo; fase, inimigos, controlar o player
+vou deixar a tela da gameover do jeito que tava msm
+]]
 -- MARK: LOVE LOAD
 function love.load()
     -- UI/UX
@@ -89,8 +95,15 @@ function love.update(dt)
         prop.fadeColor = {0,0,0,0}
     end
 
-    if inMenu then
+    if screen == 1 then
         menu.update(dt)
+        return
+    end
+
+    if screen == 2 then
+        if love.keyboard.isDown("b") then
+            screen = 1
+        end
         return
     end
 
@@ -101,7 +114,7 @@ function love.update(dt)
         end
         -- voltar pro menu
         if love.keyboard.isDown("b") then
-            inMenu = true
+            screen = 1
         end
         return
     end
@@ -121,9 +134,9 @@ function love.update(dt)
     end
 
     
-    if love.keyboard.isDown("k") then
+    --[[if love.keyboard.isDown("k") then
         inimigosVivos = 0
-    end
+    end]]
 
     PlayerUpdate(dir, dt)
     
@@ -211,7 +224,7 @@ function love.draw()
     end
     love.graphics.clear(0, 0, 0, 1)
     
-    if inMenu then
+    if screen == 1 then
         menu.draw()
         local mouseX, mouseY = love.mouse.getPosition()
     
@@ -230,6 +243,12 @@ function love.draw()
             menu.creditsButtonImage = love.graphics.newImage("assets/sprites/buttons/button-credits.png")
         end
         
+        return
+    end
+
+    if screen == 2 then 
+        -- MARK: CRÉDITOS
+        love.graphics.draw(love.graphics.newImage("assets/finalScreen/creditsscreen.png"), 0, 0)
         return
     end
     
@@ -330,12 +349,13 @@ function love.draw()
 end
 
 function love.mousepressed(x, y, button, istouch, presses)
-    if inMenu then
-        local mouseX, mouseY = love.mouse.getPosition()
-        if mouseX > menu.playButtonX and mouseX < (menu.playButtonX + menu.playButtonImage:getWidth() * menu.buttonScale) and 
-           mouseY > menu.playButtonY and mouseY < (menu.playButtonY + menu.playButtonImage:getHeight() * menu.buttonScale) then
-            inMenu = false
+    if screen == 1 then
+        if x > menu.playButtonX and x < (menu.playButtonX + menu.playButtonImage:getWidth() * menu.buttonScale) and 
+           y > menu.playButtonY and y < (menu.playButtonY + menu.playButtonImage:getHeight() * menu.buttonScale) then
             newGame()
+        elseif x > menu.creditsButtonX and x < (menu.creditsButtonX + menu.creditsButtonImage:getWidth() * menu.buttonScale) and 
+            y > menu.creditsButtonY and y < (menu.creditsButtonY + menu.creditsButtonImage:getHeight() * menu.buttonScale) then
+            screen = 2
         end
         return
     end
@@ -642,9 +662,11 @@ end
 
 -- MARK: - Inicia jogo
 function newGame()
+    screen = 3
     for i = 1, #tiros do
         resetTiro(tiros[i])
     end
+    waveTime = 0
     currentWave = 1
     spdEnemy = 2
     iniciarWave(currentWave)
