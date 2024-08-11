@@ -28,6 +28,12 @@ local inMenu = true
 local inTransition = false
 local prop = {fadeColor = {0,0,0,0}}
 
+--[[ -- Shake effect
+local shakeDuration = 0.3 -- Duração do shake em segundos
+local shakeMagnitude = 5 -- Intensidade do shake
+local shakeTime = 0 ]]
+
+
 -- MARK: LOVE LOAD
 function love.load()
     -- UI/UX
@@ -196,7 +202,7 @@ function love.update(dt)
 
 end
 
--- MARK: LOVE DRAW
+-- MARK: Main Draw
 function love.draw()
     local mouseX = love.mouse.getX()
     local mouseY = love.mouse.getY()
@@ -227,11 +233,12 @@ function love.draw()
         return
     end
     
--- Setei o gameOverTitle aqui, variavel no love.draw = gameOverImg
+-- MARK: - GameOver Screen
     if gameover then
         -- GameOverTitle (aumentar com escala)
-        local GOWidth = gameOverImg:getWidth()
-        local GOHeight = gameOverImg:getHeight()
+        local scale = 2.5
+        local GOWidth = gameOverImg:getWidth() * scale
+        local GOHeight = gameOverImg:getHeight() * scale
         local x = (1200 - GOWidth) / 2
         local y = (800 - GOHeight) / 2
         -- Text
@@ -247,7 +254,7 @@ function love.draw()
         local text2X = (1200 - text2Width) / 2
         local text2Y = (800 - text2Height) / 2 + GOHeight / 2 + 50
 
-        love.graphics.draw(gameOverImg, x, y)
+        love.graphics.draw(gameOverImg, x, y, 0, scale,scale)
         love.graphics.print(text, textX, textY)
         love.graphics.print(text2, text2X, text2Y)
         return
