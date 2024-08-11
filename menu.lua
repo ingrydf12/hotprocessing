@@ -11,7 +11,7 @@ playButtonX, playButtonY, creditsButtonX, creditsButtonY, music}
 -- MARK: - Load
 local function loadImages()
     menu.backgroundImage = love.graphics.newImage("assets/menuDefault/smdCresp.png")
-    menu.titleImage = love.graphics.newImage("assets/menuDefault/hotlineTitle.png")
+    menu.titleImage = love.graphics.newImage("assets/menuDefault/hotlinetitle.png")
     menu.playButtonImage = love.graphics.newImage("assets/sprites/buttons/play_button_1.png")
     menu.hover = love.graphics.newImage("assets/sprites/buttons/play_button_2.png")
     menu.creditsButtonImage = love.graphics.newImage("assets/sprites/buttons/button-credits.png")
