@@ -62,7 +62,7 @@ function love.load()
     -- Inicializa o array de tiros
     tiros = {}
     for i = 1, LIMITE do
-        tiros[i] = {x = -1500, y = -1500, velx = 0, vely = 0}
+        tiros[i] = {x = -1500, y = -1500, velx = 0, vely = 0, angle = 0}
     end
 
 end
@@ -272,7 +272,7 @@ function love.draw()
     -- Draw tiros (bulletImage)
     for i = 1, LIMITE do
         local tiro = tiros[i]
-        love.graphics.draw(bulletImage, tiro.x, tiro.y, 270, 0.8,0.8)
+        love.graphics.draw(bulletImage, tiro.x, tiro.y, tiro.angle, 0.8,0.8)
     end
     
     -- MARK: - "Knockback" effect on enemys
@@ -336,6 +336,7 @@ function love.mousepressed(x, y, button, istouch, presses)
         end
 
         local angle = angleToPoint(600, 400, x, y)
+        tiros[tiro_atual].angle = angle
         tiros[tiro_atual].x = posx
         tiros[tiro_atual].y = posy
         tiros[tiro_atual].velx = spdTiro * 2 * math.cos(angle)
