@@ -232,7 +232,7 @@ function love.update(dt)
         
         -- Colisão com o player 
         if not inimigos[i].morto and dist(inimigos[i].x,inimigos[i].y, posx, posy) < 10 then
-            if inimigos[i].variation == 3 then
+            if inimigos[i].variation == 2 then
                 inimigos[i].curAnim = 3
             end
             if player.iTime <= 0 then
@@ -639,8 +639,8 @@ function iniciarWave(wave)
         inimigos[i].variation = var
         inimigos[i].anims[1] = newAnim("assets/sprites/enemy" .. var .. "/walk", 5) -- Animação de andar
         inimigos[i].anims[2] = newAnim("assets/sprites/enemy".. var .."/enemy-death", 2, false) -- Animação de morte
-        if var == 3 then
-            inimigos[i].anims[3] = newAnim("assets/sprites/enemy" .. var .. "/stab", 5)
+        if var == 2 then
+            inimigos[i].anims[3] = newAnim("assets/sprites/enemy" .. var .. "/attack", 5)
         end
     end
     -- Aumenta o tamanho das paredes a partir da wave 5
