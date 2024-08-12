@@ -40,6 +40,7 @@ tela 1 = tela inicial
 tela 2 = tela de creditos 
 tela 3 = loop principal do jogo; fase, inimigos, controlar o player
 tela 4 = tela de pauseGame
+tela 5 = tela de controles
 vou deixar a tela da gameover do jeito que tava msm
 ]]
 -- MARK: LOVE LOAD
@@ -62,6 +63,7 @@ function love.load()
     menu = require("menu")
     menu.load()
     tween = require("tween")
+    transition = tween.new(0.3,prop, {fadeColor = {0,0,0,1}})
     transition = tween.new(0.3,prop, {fadeColor = {0,0,0,1}})
 
     iniciarWave(currentWave)
@@ -422,7 +424,7 @@ function love.draw()
     for i = 1, player.vida do
         local heartImage
         if player.vida == 1 and i == player.vida then
-            heartImage = playerLastHeart
+            heartImage = playerLastHeart 
         else
             heartImage = playerHeart
         end
@@ -665,6 +667,7 @@ function verificarWaveCompleta()
         sfxWin = love.audio.newSource("assets/sfx/sfx-WinBasic.wav", "stream")
         sfxWin:setVolume(0.2)
         sfxWin:play()
+        player.vida = 5 -- Regenera após passar de wave
         transition = tween.new(0.3,prop, {fadeColor = {0,0,0,1}})
     end
 end
@@ -730,28 +733,6 @@ function spawnEnemies(dt)
 
         end
         spawnedCount = spawnedCount + groupSize
-    end
-end
-
--- Carregar as imagens uma vez fora da função
-local teclaW = love.graphics.newImage("assets/sprites/teclas/teclaw.png")
-local teclaA = love.graphics.newImage("assets/sprites/teclas/teclaa.png")
-local teclaS = love.graphics.newImage("assets/sprites/teclas/teclas.png")
-local teclaD = love.graphics.newImage("assets/sprites/teclas/teclad.png")
-
-function controlsView()
-    -- Desenha UI mostrando os controles usados pelo player
-    if love.keyboard.isDown("w") then
-        love.graphics.draw(teclaW, 1100, 40, 0, 2, 2)
-    end
-    if love.keyboard.isDown("a") then
-        love.graphics.draw(teclaA, 1100, 70, 0, 2, 2)
-    end
-    if love.keyboard.isDown("s") then
-        love.graphics.draw(teclaS, 1100, 100, 0, 2, 2)
-    end
-    if love.keyboard.isDown("d") then
-        love.graphics.draw(teclaD, 1100, 130, 0, 2, 2)
     end
 end
 
