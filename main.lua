@@ -62,7 +62,7 @@ function love.load()
     menu = require("menu")
     menu.load()
     tween = require("tween")
-    transition = tween.new(1,prop, {fadeColor = {0,0,0,1}})
+    transition = tween.new(0.3,prop, {fadeColor = {0,0,0,1}})
 
     iniciarWave(currentWave)
 
@@ -72,6 +72,7 @@ function love.load()
     chao = love.graphics.newImage("assets/sprites/floor/floor1.png")
     gameOverImg = love.graphics.newImage ("assets/sprites/gameOverScreen/gameOverTitle.png") -- Load gameOverTitle
     bulletImage = love.graphics.newImage("assets/items/bullet.png")
+    wallSprite = love.graphics.newImage("assets/sprites/wall/wall.png")
 
 
     -- Inicializa o array de tiros
@@ -153,9 +154,9 @@ function love.update(dt)
     end
 
     
-    --[[if love.keyboard.isDown("k") then
+    if love.keyboard.isDown("k") then
         inimigosVivos = 0
-    end]]
+    end
 
     PlayerUpdate(dir, dt)
 
@@ -205,11 +206,12 @@ function love.update(dt)
 
         -- Animação dos inimigos mortos
         if inimigos[i].morto then
-            updateFrame(inimigos[i].anims[2], dt)
+            inimigos[i].curAnim = 2
         else
-            updateFrame(inimigos[i].anims[1], dt) -- Atualiza animação normal
+            inimigos[i].curAnim = 1
         end
 
+        
         -- MARK: Visão dos inimigos
         for _ = 1, #walls do
             if inimigos[i].morto then
@@ -225,13 +227,19 @@ function love.update(dt)
                 inimigos[i].cego = false
             end
         end
-
+        
         -- Colisão com o player 
-        if player.iTime <= 0 and not inimigos[i].morto and dist(inimigos[i].x,inimigos[i].y, posx, posy) < 10 then
-            player.vida = player.vida - 1
-            player.iTime = 0.65 -- 650ms
+        if not inimigos[i].morto and dist(inimigos[i].x,inimigos[i].y, posx, posy) < 10 then
+            if inimigos[i].variation == 3 then
+                inimigos[i].curAnim = 3
+            end
+            if player.iTime <= 0 then
+                player.vida = player.vida - 1
+                player.iTime = 0.65 -- 650ms
+            end
         end
-
+        
+        updateFrame(inimigos[i].anims[inimigos[i].curAnim], dt) -- Atualiza animação
 
     end
 
@@ -335,9 +343,40 @@ function love.draw()
     
     love.graphics.setColor(white)
     
-    -- Paredes (só pra saber onde estão enquanto não tem sprite)
+    -- Paredes
     for i = 1, #walls do
-        love.graphics.line(walls[i])
+        local dx = math.abs(walls[i][1] - walls[i][3])
+        local dy = math.abs(walls[i][2] - walls[i][4])
+        local kx = 1
+        local ky = 1
+        local rot = 0
+        local size
+        local menor
+        local offset
+        if dx > dy then -- parede é horizontal
+            ky = 0
+            size = dx
+            offset = kx
+            if walls[i][1] - walls[i][3] < 0 then
+                menor = 1
+            else
+                menor = 3
+            end
+        else -- parede é vertical
+            rot = math.pi/2
+            kx = 0
+            size = dy
+            offset = ky
+            if walls[i][2] - walls[i][4] < 0 then
+                menor = 1
+            else
+                menor = 3
+            end
+        end
+
+        for _ = 1, size, wallSprite:getWidth() do
+            love.graphics.draw(wallSprite, walls[i][menor]+_*kx, walls[i][menor+1]+_*ky, rot, 1, 1, 0,wallSprite:getHeight()/2*offset)
+        end
     end
 
     -- Draw tiros (bulletImage)
@@ -356,11 +395,7 @@ function love.draw()
         
         -- MARK: Sprite enemy load
         local frame
-        if inimigos[i].morto then
-            frame = getFrame(inimigos[i].anims[2]) -- Usa animação de morte
-        else
-            frame = getFrame(inimigos[i].anims[1]) -- Usa animação normal
-        end
+        frame = getFrame(inimigos[i].anims[inimigos[i].curAnim]) -- Usa a current animation
         
         if frame then
             love.graphics.draw(frame, inimigos[i].x, inimigos[i].y, inimigos[i].angle+math.pi/2, 1, 1, frame:getWidth() / 2, frame:getHeight() / 2)
@@ -451,6 +486,9 @@ end
 
 -- MARK: - IA Enemy
 function moverInimigo(i)
+    if math.abs(inimigos[i].x - posx) < 5 and math.abs(inimigos[i].y - posy) < 5 then
+        return
+    end
     local angle = angleToPoint(inimigos[i].x, inimigos[i].y, posx, posy)
     local collide_count = {0,0}
     for _ = 1, #walls do
@@ -596,13 +634,16 @@ function iniciarWave(wave)
     for i = 1, inimigosVivos do
         local var = math.random(2)
         inimigos[i] = createEnemy(3000,0)
+        inimigos[i].variation = var
         inimigos[i].anims[1] = newAnim("assets/sprites/enemy" .. var .. "/walk", 5) -- Animação de andar
         inimigos[i].anims[2] = newAnim("assets/sprites/enemy".. var .."/enemy-death", 2, false) -- Animação de morte
-        -- inimigos[i].anims[2] = newAnim ("assets/sprites/enemy/death", 5)
+        if var == 3 then
+            inimigos[i].anims[3] = newAnim("assets/sprites/enemy" .. var .. "/stab", 5)
+        end
     end
     -- Aumenta o tamanho das paredes a partir da wave 5
     if currentWave >= wallSizeIncreaseWave then
-        wallSize = 1200
+        wallSize = 1216
         floorScale = 1.5
     else
         wallSize = 800 * 1.2
@@ -624,14 +665,14 @@ function verificarWaveCompleta()
         sfxWin = love.audio.newSource("assets/sfx/sfx-WinBasic.wav", "stream")
         sfxWin:setVolume(0.2)
         sfxWin:play()
-        transition = tween.new(1,prop, {fadeColor = {0,0,0,1}})
+        transition = tween.new(0.3,prop, {fadeColor = {0,0,0,1}})
     end
 end
 
 -- MARK: Create new enemy
 
 function createEnemy(x,y)
-    return {x = x, y = y, spd = spdEnemy, frame = 1, angle = 0, vida = 3, morto = false, flashTime = 0, cego = false, anims = {},  roamTime = 0, roamPos={x = 0, y = 0}, hitbox = {x = x, y = y, r = 20}}
+    return {x = x, y = y, spd = spdEnemy, frame = 1, angle = 0, vida = 3, morto = false, flashTime = 0, cego = false, anims = {},  roamTime = 0, roamPos={x = 0, y = 0}, hitbox = {x = x, y = y, r = 20}, curAnim = 1, variation}
 end
 
 -- MARK: Room configs
