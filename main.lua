@@ -156,9 +156,9 @@ function love.update(dt)
     end
 
     
-    if love.keyboard.isDown("k") then
+    --[[if love.keyboard.isDown("k") then
         inimigosVivos = 0
-    end
+    end]]
 
     PlayerUpdate(dir, dt)
 
@@ -232,7 +232,7 @@ function love.update(dt)
         
         -- Colisão com o player 
         if not inimigos[i].morto and dist(inimigos[i].x,inimigos[i].y, posx, posy) < 10 then
-            if inimigos[i].variation == 2 then
+            if inimigos[i].variation == 2 or inimigos[i].variation == 3 then
                 inimigos[i].curAnim = 3
             end
             if player.iTime <= 0 then
@@ -634,12 +634,12 @@ function iniciarWave(wave)
     -- Aumenta 3 inimigos a cada wave 
     inimigosVivos = inimigosPorWave + 3 * wave
     for i = 1, inimigosVivos do
-        local var = math.random(2)
+        local var = math.random(3)
         inimigos[i] = createEnemy(3000,0)
         inimigos[i].variation = var
         inimigos[i].anims[1] = newAnim("assets/sprites/enemy" .. var .. "/walk", 5) -- Animação de andar
         inimigos[i].anims[2] = newAnim("assets/sprites/enemy".. var .."/enemy-death", 2, false) -- Animação de morte
-        if var == 2 then
+        if var == 2 or var ==  3 then
             inimigos[i].anims[3] = newAnim("assets/sprites/enemy" .. var .. "/attack", 5)
         end
     end
